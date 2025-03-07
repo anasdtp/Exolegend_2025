@@ -14,6 +14,7 @@ StateMachine::StateMachine(GameState *game)
 void StateMachine::reset()
 {
     currentState = State::WAIT;
+    currentState = State::WAIT;
     etat_exploration = 0;
 }
 
@@ -62,25 +63,31 @@ bool StateMachine::TimeToExplode()
     return (0);
 }
 
-Position StateMachine::getNearestBomb()
+MazeSquare *StateMachine::getNearestBomb()
 {
-    Position current_pos = game->gladiator->robot->getData().position;
-    Position nearest_bomb = current_pos;
     float min_dist = 1000;
-    MazeSquare *current_square = getMazeSquareCoor(current_pos, game->gladiator);
-    for (uint8_t i; i < 12; i++)
+    MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
+    MazeSquare *nearest_bomb = nullptr;
+    const int searchRadius = 5;  // On ne regarde que dans un carré de 5 cases autour de la position actuelle
+
+    // Définir les bornes de la recherche en fonction des indices du carré courant
+    uint8_t i_min = (current_square->i >= searchRadius ? current_square->i - searchRadius : 0);
+    uint8_t i_max = (current_square->i + searchRadius < SIZE ? current_square->i + searchRadius : SIZE - 1);
+    uint8_t j_min = (current_square->j >= searchRadius ? current_square->j - searchRadius : 0);
+    uint8_t j_max = (current_square->j + searchRadius < SIZE ? current_square->j + searchRadius : SIZE - 1);
+
+    for (uint8_t i = i_min; i <= i_max; i++)
     {
-        for (uint8_t j; j < 12; j++)
+        for (uint8_t j = j_min; j <= j_max; j++)
         {
             MazeSquare *square = game->gladiator->maze->getSquare(i, j);
-            if (square->coin.value)
+            if (square->coin.value)  // La case contient une bombe (ou coin, selon ta logique)
             {
-                Position bomb_pos = getSquareCoor(square, game->gladiator->maze->getSquareSize());
-                float dist = getDistance(current_pos, bomb_pos);
+                float dist = getDistance(current_square, square);
                 if (dist < min_dist)
                 {
                     min_dist = dist;
-                    nearest_bomb = bomb_pos;
+                    nearest_bomb = square;
                 }
             }
         }
@@ -95,6 +102,7 @@ void StateMachine::strategy()
     // bool f_close_enemy = CloseEnemy(0.5);
     bool f_close_max_wall = CloseMaxWall();
     bool bomb = false;
+    int number_of_bombs = game->gladiator->weapon->getBombCount();
     // bool f_time_to_explode = TimeToExplode();
 
     // game->gladiator->log("void StateMachine::transition() : Possède une fusée : %d", t_recherche_fusee);
@@ -102,22 +110,35 @@ void StateMachine::strategy()
     switch (currentState)
     {
     case State::WAIT:
-        // if (f_close_enemy)
-        // {
-        //     currentState = State::CLOSE_ENEMY;
-        // }
+    {
+        if(number_of_bombs){
+            game->gladiator->weapon->dropBombs(number_of_bombs);
+        }
+
         if (f_close_max_wall)
         {
             currentState = State::SURVIVAL;
         }
-        else if (bomb)
-        {
-            currentState = State::EXPLORE_BOMB;
+        else if(game->motors->available()){
+            // if (f_close_enemy)
+            // {
+            //     currentState = State::CLOSE_ENEMY;
+            // }
+            
+            // else if (f_time_to_explode)
+            // {
+            //     currentState = State::EXPLOSION;
+            // }
+            // else
+            if (bomb){
+                currentState = State::EXPLORE_BOMB;
+            }
+            else
+            {
+                currentState = State::EXPLORE;
+            }
         }
-        else
-        {
-            currentState = State::EXPLORE;
-        }
+    }
         break;
 
     case State::SURVIVAL:
@@ -142,8 +163,8 @@ void StateMachine::strategy()
     case State::EXPLORE_BOMB:
     {
         // On cherche où sont les bombes les plus proches et on s'y dirige et on les ramasse puis explose
-        Position nearest_bomb = getNearestBomb();
-        game->gotoSquare(getMazeSquareCoor(nearest_bomb, game->gladiator));
+        MazeSquare *nearest_bomb = getNearestBomb();
+        game->gotoSquare(nearest_bomb);
         currentState = State::WAIT;
     }
     break;

@@ -5,17 +5,7 @@
 #define max_parth_finder_size 32
 #endif
 
-struct coordonnees
-{
-    int i;
-    int j;
-};
-
-struct pathFinder
-{
-    int size;
-    coordonnees path_coord[max_parth_finder_size];
-};
+#define SIZE 12
 
 class GameState
 {
@@ -34,9 +24,7 @@ public:
 
     float squareSize;
 
-    int count;
-    pathFinder coord_list;
-    pathFinder simplified_coord_list;
+    MazeSquare *maze[SIZE][SIZE];
 
     uint8_t bomb_square[12][12];
 
