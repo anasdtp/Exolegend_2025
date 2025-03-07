@@ -10,8 +10,6 @@ Asservissement *motors;
 
 int testPath[5][2] = {{1, 6}, {2,6}, {3, 6}, {4, 6}, {4, 6}};
 
-bool followPath(GameState *game);
-
 void reset();
 void setup()
 {
@@ -50,9 +48,6 @@ void loop()
         // code de votre stratégie
         game->Update();
         
-        followPath(game);
-        
-
         if (TempsEchantionnage(TE_MS))
         {
             motors->positionControl(motors->getTargetPos());
@@ -62,9 +57,3 @@ void loop()
     }
 }
 
-void gotoSquare(MazeSquare *square, GameState *game)
-{
-    game->goal = getSquareCoor(square, game->squareSize);
-
-    game->motors->setTargetPos(game->goal);
-}

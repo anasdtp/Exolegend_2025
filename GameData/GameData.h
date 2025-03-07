@@ -41,4 +41,6 @@ public:
 
     void Update();
     void reset();
+
+    void gotoSquare(MazeSquare *square);
 };
