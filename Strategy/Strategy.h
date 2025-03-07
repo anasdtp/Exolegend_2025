@@ -15,6 +15,7 @@ public:
         SURVIVAL,
         EXPLOSION,
         CLOSE_ENEMY,
+        EXPLORE
     };
 
     GameState *game;
