@@ -8,14 +8,13 @@
 class StateMachine
 {
 public:
-    enum class State
+    enum State
     {
-        ATTENTE,
-        RECHERCHE_FUSEE,
-        EXPLORATION,
-        PVP,
-        RECHERCHE_CIBLE,
-        TIRER
+        WAIT,
+        EXPLORE,
+        SURVIVAL,
+        EXPLOSION,
+        CLOSE_ENEMY,
     };
 
     GameState *game;
@@ -25,14 +24,17 @@ public:
 
     StateMachine(GameState *game);
 
+    void Update();
+
     void reset();
 
     void strategy();
-    
-    bool closeEnnemi(float dist_thresh);
 
+    bool CloseEnemy(float dist_thresh);
 
+    bool CloseMaxWall();
+
+    bool TimeToExplode();
 };
-
 
 #endif // STRATEGY_H
