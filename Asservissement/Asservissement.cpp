@@ -16,6 +16,33 @@ Position getSquareCoor(uint8_t i, uint8_t j, float squareSize)
     return coor;
 }
 
+MazeSquare *getMazeSquare(const Position &pos, Gladiator *gladiator)
+{
+    uint8_t i = (uint8_t)(pos.x / gladiator->maze->getSquareSize());
+    uint8_t j = (uint8_t)(pos.y / gladiator->maze->getSquareSize());
+
+    return gladiator->maze->getSquare(i, j);;
+}
+
+bool isAWallInFrontOfMe(Position pos, Gladiator *gladiator) {
+    MazeSquare* currentSquare = getMazeSquare(pos, gladiator);
+
+    // Déterminer la direction du déplacement
+    if ((pos.a >= -PI / 4 && pos.a < PI / 4)) {  // Vers l'Est (droite)
+        return currentSquare->eastSquare == NULL;
+    } 
+    else if (pos.a >= PI / 4 && pos.a < 3 * PI / 4) {  // Vers le Nord (haut)
+        return currentSquare->northSquare == NULL;
+    } 
+    else if ((pos.a >= 3 * PI / 4 || pos.a < -3 * PI / 4)) {  // Vers l'Ouest (gauche)
+        return currentSquare->westSquare == NULL;
+    } 
+    else {  // Vers le Sud (bas)
+        return currentSquare->southSquare == NULL;
+    }
+}
+
+
 float getDistance(const Position &p1, const Position &p2)
 {
     return sqrt(pow((p1.x - p2.x), 2) + pow((p1.y - p2.y), 2));
@@ -161,7 +188,10 @@ void Asservissement::positionControl(Position targetPos)
             traj = fnVitesse2(currentPos, targetPos);
             
             if(abs(angleDifference) > toleranceAngle){
+                // Calcul de l'angle cible
+                target_angle = angleDifference;
                 etat_automate_depl = ROTATION;
+
                 Serial.println("case INITIALISATION -> ROTATION");
             }
             else{
@@ -204,7 +234,7 @@ void Asservissement::positionControl(Position targetPos)
             float rho = atan2(dy, dx);
             float consw = kw * reductionAngle(rho - currentPos.a);
 
-            float consv = kv * d * cos(reductionAngle(rho - currentPos.a));
+            float consv = kv * d * pow(cos(reductionAngle(rho - currentPos.a)), 15);
             // consw = abs(consw) > wlimit ? (consw > 0 ? 1 : -1) * wlimit : consw;
             // consv = abs(consv) > vlimit ? (consv > 0 ? 1 : -1) * vlimit : consv;
 
@@ -238,19 +268,22 @@ void Asservissement::positionControl(Position targetPos)
         // Apply the PID correction
         consvl += pidOutput;
         consvr += pidOutput;
+
+        // if(isAWallInFrontOfMe(currentPos, gladiator)){
+        //     consvr = 0;
+        //     consvl = 0;
+        //     etat_automate_depl = ROTATION;
+        //     target_angle = currentPos.a + PI;
+        //     Serial.println("case GO_TO_POS -> ARRET");
+        // }
     }
     break;
     case ROTATION:
     {
         dt = (millis() - start_time) * 0.001f;
         
-        // Calcul de l'angle cible
-        float dx = targetPos.x - currentPos.x;
-        float dy = targetPos.y - currentPos.y;
-        float targetAngle = atan2(dy, dx);
-        
         // Calcul de l'erreur angulaire
-        float angleError = reductionAngle(targetAngle - currentPos.a);
+        float angleError = reductionAngle(target_angle - currentPos.a);
         
         // Log pour le debug
         // gladiator->log("currentPos.a = %f, targetAngle = %f, angleError = %f", currentPos.a, targetAngle, angleError);

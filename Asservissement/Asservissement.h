@@ -60,6 +60,8 @@ private:
     unsigned long start_time;
     float dt;
 
+    float target_angle; //Pour l'etat ROTATION
+
     int etat_automate_depl = INITIALISATION;
 
     bool flag_available;
