@@ -1,7 +1,7 @@
 #include "Strategy.h"
 #include "Asservissement/Asservissement.h"
-#include "Asservissement/goto.h"
 #include "Mathematiques/Mathematiques.h"
+
 
 StateMachine::StateMachine(GameState *game)
 {
@@ -65,9 +65,11 @@ bool StateMachine::TimeToExplode()
 
 void StateMachine::strategy()
 {
+
     bool f_close_enemy = CloseEnemy(0.5);
     bool f_close_max_wall = CloseMaxWall();
     bool f_time_to_explode = TimeToExplode();
+
     // game->gladiator->log("void StateMachine::transition() : Possède une fusée : %d", t_recherche_fusee);
 
     switch (currentState)
@@ -90,7 +92,7 @@ void StateMachine::strategy()
             currentState = State::EXPLORE;
 
             break;
-
+        
         case State::SURVIVAL:
             Position current_pos = game->gladiator->robot->getData().position;
             float sg_x = 1;
@@ -158,5 +160,6 @@ void StateMachine::strategy()
             // }
         }
         break;
+
         }
     }

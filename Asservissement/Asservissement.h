@@ -1,6 +1,7 @@
 #ifndef ASSERVISSEMENT_H
 #define ASSERVISSEMENT_H
 #include "gladiator.h"
+#include "Mathematiques/Mathematiques.h"
 #include <functional>
 
 using FuncType = std::function<float(float)>;
@@ -25,11 +26,6 @@ typedef struct
     float integral, prev_error;
 } PIDCoef;
 
-
-Position getSquareCoor(const MazeSquare *square, float squareSize);
-Position getSquareCoor(uint8_t i, uint8_t j, float squareSize);
-float getDistance(const Position &p1, const Position &p2);
-double reductionAngle(double x);
 bool TempsEchantionnage(unsigned long TIME);
 
 class Asservissement

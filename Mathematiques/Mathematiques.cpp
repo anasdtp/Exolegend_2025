@@ -14,6 +14,14 @@ Position getSquareCoor(uint8_t i, uint8_t j, float squareSize)
     return coor;
 }
 
+MazeSquare *getMazeSquareCoor(const Position &pos, Gladiator *gladiator)
+{
+    uint8_t i = (uint8_t)(pos.x / gladiator->maze->getSquareSize());
+    uint8_t j = (uint8_t)(pos.y / gladiator->maze->getSquareSize());
+
+    return gladiator->maze->getSquare(i, j);;
+}
+
 float getDistance(const Position &p1, const Position &p2)
 {
     return sqrt(pow((p1.x - p2.x), 2) + pow((p1.y - p2.y), 2));
