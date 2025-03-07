@@ -95,8 +95,8 @@ void StateMachine::strategy()
         case State::SURVIVAL:
         {
             MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
-            float sg_x = 1;
-            float sg_y = 1;
+            uint8_t sg_x = 1;
+            uint8_t sg_y = 1;
             if (current_square->i > 6)
             {
                 sg_x = -1;
@@ -112,7 +112,7 @@ void StateMachine::strategy()
 
         case State::EXPLORE:
         {
-                }
+        }
         break;
         }
     }
