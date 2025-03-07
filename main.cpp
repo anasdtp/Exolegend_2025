@@ -37,16 +37,6 @@ void reset()
     game->goal = gladiator->robot->getData().position;
     motors->setTargetPos(game->goal);
     match_started = false;
-
-    for (int k = 0; k < 5; k++)
-    {
-        int i = testPath[k][0];
-        int j = testPath[k][1];
-        // game->gladiator->log("case à visitée :%d,%d", i, j);
-        game->simplified_coord_list.path_coord[game->count].i = i;
-        game->simplified_coord_list.path_coord[game->count].j = j;
-        game->count = (game->count + 1) % max_parth_finder_size;
-    }
 }
 
 void loop()

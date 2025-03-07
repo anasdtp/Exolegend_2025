@@ -25,7 +25,6 @@ void GameState::Update()
 
 void GameState::reset()
 {
-    count = 0;
     myData = gladiator->robot->getData();
 
     bool enn_init = true;
