@@ -8,5 +8,8 @@ MazeSquare *getMazeSquareCoor(const Position &pos, Gladiator *gladiator);
 float getDistance(const Position &p1, const Position &p2);
 double reductionAngle(double x);
 
+// Heuristique : distance de Manhattan
+uint8_t heuristic(MazeSquare *a, MazeSquare *b);
+
 
 #endif // MATHEMATIQUES_H

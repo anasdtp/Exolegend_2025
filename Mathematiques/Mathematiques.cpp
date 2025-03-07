@@ -34,3 +34,8 @@ double reductionAngle(double x)
         x += 2 * PI;
     return x - PI;
 }
+
+// Heuristique : distance de Manhattan
+uint8_t heuristic(MazeSquare *a, MazeSquare *b) {
+    return abs(a->i - b->i) + abs(a->j - b->j);
+}
