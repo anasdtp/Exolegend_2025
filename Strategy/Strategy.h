@@ -11,7 +11,7 @@ public:
     enum State
     {
         WAIT,
-        EXPLORE,
+        EXPLORE_BOMB,
         SURVIVAL,
         EXPLOSION,
         CLOSE_ENEMY,
@@ -35,6 +35,8 @@ public:
     bool CloseMaxWall();
 
     bool TimeToExplode();
+
+    Position getNearestBomb();
 };
 
 #endif // STRATEGY_H

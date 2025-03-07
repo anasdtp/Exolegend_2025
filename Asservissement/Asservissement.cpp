@@ -1,21 +1,24 @@
 #include "Asservissement.h"
 
-
-
-bool isAWallInFrontOfMe(Position pos, Gladiator *gladiator) {
-    MazeSquare* currentSquare = getMazeSquareCoor(pos, gladiator);
+bool isAWallInFrontOfMe(Position pos, Gladiator *gladiator)
+{
+    MazeSquare *currentSquare = getMazeSquareCoor(pos, gladiator);
 
     // Déterminer la direction du déplacement
-    if ((pos.a >= -PI / 4 && pos.a < PI / 4)) {  // Vers l'Est (droite)
+    if ((pos.a >= -PI / 4 && pos.a < PI / 4))
+    { // Vers l'Est (droite)
         return currentSquare->eastSquare == NULL;
-    } 
-    else if (pos.a >= PI / 4 && pos.a < 3 * PI / 4) {  // Vers le Nord (haut)
+    }
+    else if (pos.a >= PI / 4 && pos.a < 3 * PI / 4)
+    { // Vers le Nord (haut)
         return currentSquare->northSquare == NULL;
-    } 
-    else if ((pos.a >= 3 * PI / 4 || pos.a < -3 * PI / 4)) {  // Vers l'Ouest (gauche)
+    }
+    else if ((pos.a >= 3 * PI / 4 || pos.a < -3 * PI / 4))
+    { // Vers l'Ouest (gauche)
         return currentSquare->westSquare == NULL;
-    } 
-    else {  // Vers le Sud (bas)
+    }
+    else
+    { // Vers le Sud (bas)
         return currentSquare->southSquare == NULL;
     }
 }
@@ -35,7 +38,8 @@ bool TempsEchantionnage(unsigned long TIME)
     }
 }
 
-Asservissement::Asservissement(Gladiator* gladiator){
+Asservissement::Asservissement(Gladiator *gladiator)
+{
     this->gladiator = gladiator;
 
     v_max = 1.f; acc_max = 0.7f;
@@ -43,27 +47,33 @@ Asservissement::Asservissement(Gladiator* gladiator){
     ta = v_max / acc_max;
     d_max = v_max * v_max / acc_max;
 
-    goTo.Kp = 0.2f; goTo.Ki = 0.0f; goTo.Kd = 0.f;
-    goTo.integral = 0; goTo.prev_error = 0;
+    goTo.Kp = 0.2f;
+    goTo.Ki = 0.0f;
+    goTo.Kd = 0.f;
+    goTo.integral = 0;
+    goTo.prev_error = 0;
 
-    rotation.Kp = 1.8f; rotation.Ki = 0.001f; rotation.Kd = 0.01f;
-    rotation.integral = 0; rotation.prev_error = 0;
+    rotation.Kp = 1.8f;
+    rotation.Ki = 0.001f;
+    rotation.Kd = 0.01f;
+    rotation.integral = 0;
+    rotation.prev_error = 0;
 
-    Threshold = 0.05f; 
-    toleranceAngle = 8.f * PI/180.f;
+    Threshold = 0.05f;
+    toleranceAngle = 8.f * PI / 180.f;
     consvl = 0;
     consvr = 0;
 
-    kw = 3.f;//3.f * 2.f;
-    kv = 0.75f;//0.75f * 2.f;
+    kw = 3.f * 2.f;
+    kv = 0.75f * 2.f;
     erreurPos = 0.07f;
 
     etat_automate_depl = INITIALISATION;
     flag_available = true;
 }
 
-Asservissement::~Asservissement(){
-
+Asservissement::~Asservissement()
+{
 }
 
 FuncType Asservissement::fnVitesse2(Position init, Position fini)
@@ -75,9 +85,13 @@ FuncType Asservissement::fnVitesse2(Position init, Position fini)
         {
             float time_lim = sqrt(distance / acc_max);
             if (time < time_lim)
-                {return acc_max * time;}
+            {
+                return acc_max * time;
+            }
             else
-                {return v_max - acc_max * (time - time_lim);}
+            {
+                return v_max - acc_max * (time - time_lim);
+            }
         };
     }
     else
@@ -86,11 +100,17 @@ FuncType Asservissement::fnVitesse2(Position init, Position fini)
         {
             float tc = (distance - d_max) / v_max;
             if (time < ta)
-                {return acc_max * time;}
+            {
+                return acc_max * time;
+            }
             else if (time >= ta && time <= tc + ta)
-                {return v_max;}
+            {
+                return v_max;
+            }
             else
-                {return v_max - acc_max * (time - ta - tc);}
+            {
+                return v_max - acc_max * (time - ta - tc);
+            }
         };
     }
 }
@@ -107,11 +127,14 @@ float Asservissement::trajectoire(float time, FuncType velocityProfile)
     return trajectory;
 }
 
-void Asservissement::handlePIDCoef(PIDCoef &pidGoTo, PIDCoef &pidRotation){
+void Asservissement::handlePIDCoef(PIDCoef &pidGoTo, PIDCoef &pidRotation)
+{
     goTo = pidGoTo;
     rotation = pidRotation;
-    goTo.integral = 0; goTo.prev_error = 0;
-    rotation.integral = 0; rotation.prev_error = 0;
+    goTo.integral = 0;
+    goTo.prev_error = 0;
+    rotation.integral = 0;
+    rotation.prev_error = 0;
 }
 
 // Function to calculate PID control output
@@ -128,7 +151,7 @@ float Asservissement::calculatePID(float error, float dt, PIDCoef &pid)
 void Asservissement::positionControl(Position targetPos)
 {
     currentPos = gladiator->robot->getData().position;
-    
+
     switch (etat_automate_depl)
     {
     case INITIALISATION:
@@ -136,13 +159,14 @@ void Asservissement::positionControl(Position targetPos)
         // etat_automate_depl = GO_TO_POS;
         // float error = getDistance(currentPos, targetPos);
         // if(error < Threshold){
-            // gladiator->log("case INITIALISATION : etat_automate_depl = ROTATION");
+        // gladiator->log("case INITIALISATION : etat_automate_depl = ROTATION");
         //     etat_automate_depl = ROTATION;
         // }else{
-            // gladiator->log("case INITIALISATION : etat_automate_depl = GO_TO_POS");
+        // gladiator->log("case INITIALISATION : etat_automate_depl = GO_TO_POS");
         // }
 
-        if(getDistance(currentPos, targetPos) > Threshold){
+        if (getDistance(currentPos, targetPos) > Threshold)
+        {
             etat_automate_depl = GO_TO_POS;
             float dx = targetPos.x - currentPos.x;
             float dy = targetPos.y - currentPos.y;
@@ -150,22 +174,25 @@ void Asservissement::positionControl(Position targetPos)
             ta = v_max / acc_max;
             d_max = v_max * v_max / acc_max;
             traj = fnVitesse2(currentPos, targetPos);
-            
-            if(abs(angleDifference) > toleranceAngle){
+
+            if (abs(angleDifference) > toleranceAngle)
+            {
                 // Calcul de l'angle cible
                 target_angle = angleDifference;
                 etat_automate_depl = ROTATION;
 
                 Serial.println("case INITIALISATION -> ROTATION");
             }
-            else{
+            else
+            {
                 Serial.println("case INITIALISATION -> GO_TO_POS");
             }
 
             robot_radius = gladiator->robot->getRobotRadius();
             flag_available = false;
         }
-        else{
+        else
+        {
             flag_available = true;
         }
         start_time = millis();
@@ -176,13 +203,13 @@ void Asservissement::positionControl(Position targetPos)
         dt = (millis() - start_time) * 0.001f;
         // Generate trajectory based on desired position
         float trajectory = trajectoire(dt, traj);
-        
+
         float error = trajectory + getDistance(currentPos, targetPos);
         // gladiator->log("Position currentPos.x = %f, currentPos.y = %f, currentPos.a = %f, error = %f",currentPos.x, currentPos.y, currentPos.a, error);
         // gladiator->log("error = %f", error);
         float pidOutput = calculatePID(error, dt, goTo);
         // // gladiator->log("pidOutput = %f", pidOutput);
-        
+
         // // gladiator->log("trajectory = %f", trajectory);
         // // Calculate final motor command
         // float motor_comman d = trajectory + pidOutput;
@@ -219,7 +246,6 @@ void Asservissement::positionControl(Position targetPos)
             consvl = 0;
         }
 
-
         if ((error < Threshold) || ((consvl + consvr) == 0))
         {
             // Serial.println("case GO_TO_POS : etat_automate_depl = ROTATION");
@@ -245,23 +271,23 @@ void Asservissement::positionControl(Position targetPos)
     case ROTATION:
     {
         dt = (millis() - start_time) * 0.001f;
-        
+
         // Calcul de l'erreur angulaire
         float angleError = reductionAngle(target_angle - currentPos.a);
-        
+
         // Log pour le debug
         // gladiator->log("currentPos.a = %f, targetAngle = %f, angleError = %f", currentPos.a, targetAngle, angleError);
-        
+
         // Application du correcteur PID
         float pidOutput = calculatePID(angleError, dt, rotation);
-        
+
         // Calcul de la commande angulaire avec PID
         // float consw = pidOutput;
 
         // Calcul des vitesses des roues en rotation pure
         consvl = -pidOutput * robot_radius;
         consvr = pidOutput * robot_radius;
-        
+
         // Si l'erreur angulaire est suffisamment petite, on arrête la rotation
         if (abs(angleError) < toleranceAngle)
         {
@@ -287,11 +313,12 @@ void Asservissement::positionControl(Position targetPos)
     }
 
     // Set wheel speeds based on the calculated motor commands
-    gladiator->control->setWheelSpeed(WheelAxis::LEFT , consvl, false);
+    gladiator->control->setWheelSpeed(WheelAxis::LEFT, consvl, false);
     gladiator->control->setWheelSpeed(WheelAxis::RIGHT, consvr, false);
 }
 
-void Asservissement::setTargetPos(Position targetPos){
+void Asservissement::setTargetPos(Position targetPos)
+{
     this->targetPos = targetPos;
     flag_available = false;
 }
