@@ -35,3 +35,10 @@ void GameState::reset(){
 
     squareSize = gladiator->maze->getSquareSize();
 }
+
+void GameState::gotoSquare(MazeSquare *square)
+{
+    goal = getSquareCoor(square, squareSize);
+
+    motors->setTargetPos(goal);
+}
