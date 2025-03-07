@@ -1,4 +1,5 @@
 #include "gladiator.h"
+#include "Mathematiques/Mathematiques.h"
 #include "Asservissement/Asservissement.h"
 #include "GameData/GameData.h"
 
@@ -6,6 +7,10 @@ Gladiator *gladiator;
 GameState *game;
 
 Asservissement *motors;
+
+int testPath[5][2] = {{1, 6}, {2,6}, {3, 6}, {4, 6}, {4, 6}};
+
+bool followPath(GameState *game);
 
 void reset();
 void setup()
@@ -26,8 +31,16 @@ void reset()
     // initialisation de toutes vos variables avant le début d'un match
     gladiator->log("Call of reset function"); // GFA 4.5.1
     game->goal = gladiator->robot->getData().position;
-    Position target = {game->goal.x, game->goal.y +1, 0};
-    motors->setTargetPos(target);
+    motors->setTargetPos(game->goal);
+
+    for(int k = 0; k < 5; k++){
+        int i = testPath[k][0];
+        int j = testPath[k][1];
+        game->gladiator->log("case à visitée :%d,%d", i, j);
+        game->simplified_coord_list.path_coord[game->count].i = i;
+        game->simplified_coord_list.path_coord[game->count].j = j;
+        game->count = (game->count + 1)%max_parth_finder_size;
+    }
 }
 
 void loop()
@@ -36,6 +49,9 @@ void loop()
     { // tester si un match à déjà commencer
         // code de votre stratégie
         game->Update();
+        
+        followPath(game);
+        
 
         if (TempsEchantionnage(TE_MS))
         {
@@ -44,4 +60,11 @@ void loop()
         // robot_state_machine->machine();
 
     }
+}
+
+void gotoSquare(MazeSquare *square, GameState *game)
+{
+    game->goal = getSquareCoor(square, game->squareSize);
+
+    game->motors->setTargetPos(game->goal);
 }

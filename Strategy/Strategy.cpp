@@ -1,6 +1,5 @@
 #include "Strategy.h"
 #include "Asservissement/Asservissement.h"
-#include "Asservissement/goto.h"
 
 StateMachine::StateMachine(GameState *game) {
     this->game = game;
@@ -38,8 +37,8 @@ bool StateMachine::closeEnnemi(float dist_thresh)
 
 void StateMachine::strategy()
 {
-    bool t_recherche_fusee = !game->gladiator->weapon->canLaunchRocket();
-    bool t_ennemi_proche = ennemi_proche(game->gladiator);
+    bool t_recherche_fusee;// = !game->gladiator->weapon->canLaunchRocket();
+    bool t_ennemi_proche;// = ennemi_proche(game->gladiator);
     bool t_recherche_cible = true;
     bool t_tirer = true;
     // game->gladiator->log("void StateMachine::transition() : Possède une fusée : %d", t_recherche_fusee);
@@ -62,7 +61,7 @@ void StateMachine::strategy()
         break;
 
     case State::RECHERCHE_FUSEE:
-        new_missile(game);
+        // new_missile(game);
         currentState = State::ATTENTE;
 
         break;
@@ -87,9 +86,9 @@ void StateMachine::strategy()
         break;
         case 1 :
         {
-            if(!followPath(game)){
-                etat_exploration = 2;
-            }
+            // if(!followPath(game)){
+            //     etat_exploration = 2;
+            // }
         }
         break;
         case 2:
@@ -118,7 +117,7 @@ void StateMachine::strategy()
     break;
 
     case State::PVP:
-        executePVP();
+        // executePVP();
         currentState = State::ATTENTE;
         break;
 
@@ -135,23 +134,23 @@ void StateMachine::strategy()
         break;
 
     case State::TIRER:
-        game->gladiator->weapon->launchRocket();
+        // game->gladiator->weapon->launchRocket();
         currentState = State::ATTENTE;
         break;
     }
 }
-void StateMachine::executePVP()
-{
-    RobotData my_data = game->gladiator->robot->getData();
-    RobotData ally_data;
-    RobotList ids_list = game->gladiator->game->getPlayingRobotsId();
-    for (int i = 0; i < 4; i++)
-    {
-        if ((ids_list.ids[i] == 121 || ids_list.ids[i] != 120) && ids_list.ids[i] != my_data.id)
-        {
-            ally_data = game->gladiator->game->getOtherRobotData(ids_list.ids[i]);
-        }
-    }
-    SpartanMode(game);
-}
+// void StateMachine::executePVP()
+// {
+//     RobotData my_data = game->gladiator->robot->getData();
+//     RobotData ally_data;
+//     RobotList ids_list = game->gladiator->game->getPlayingRobotsId();
+//     for (int i = 0; i < 4; i++)
+//     {
+//         if ((ids_list.ids[i] == 121 || ids_list.ids[i] != 120) && ids_list.ids[i] != my_data.id)
+//         {
+//             ally_data = game->gladiator->game->getOtherRobotData(ids_list.ids[i]);
+//         }
+//     }
+//     SpartanMode(game);
+// }
 

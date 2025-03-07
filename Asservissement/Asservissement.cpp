@@ -2,30 +2,8 @@
 
 
 
-Position getSquareCoor(const MazeSquare *square, float squareSize)
-{
-    return getSquareCoor(square->i, square->j, squareSize);
-}
-
-Position getSquareCoor(uint8_t i, uint8_t j, float squareSize)
-{
-    Position coor;
-    coor.x = (i + 0.5f) * squareSize;
-    coor.y = (j + 0.5f) * squareSize;
-
-    return coor;
-}
-
-MazeSquare *getMazeSquare(const Position &pos, Gladiator *gladiator)
-{
-    uint8_t i = (uint8_t)(pos.x / gladiator->maze->getSquareSize());
-    uint8_t j = (uint8_t)(pos.y / gladiator->maze->getSquareSize());
-
-    return gladiator->maze->getSquare(i, j);;
-}
-
 bool isAWallInFrontOfMe(Position pos, Gladiator *gladiator) {
-    MazeSquare* currentSquare = getMazeSquare(pos, gladiator);
+    MazeSquare* currentSquare = getMazeSquareCoor(pos, gladiator);
 
     // Déterminer la direction du déplacement
     if ((pos.a >= -PI / 4 && pos.a < PI / 4)) {  // Vers l'Est (droite)
@@ -40,20 +18,6 @@ bool isAWallInFrontOfMe(Position pos, Gladiator *gladiator) {
     else {  // Vers le Sud (bas)
         return currentSquare->southSquare == NULL;
     }
-}
-
-
-float getDistance(const Position &p1, const Position &p2)
-{
-    return sqrt(pow((p1.x - p2.x), 2) + pow((p1.y - p2.y), 2));
-}
-
-double reductionAngle(double x)
-{
-    x = fmod(x + PI, 2 * PI);
-    if (x < 0)
-        x += 2 * PI;
-    return x - PI;
 }
 
 bool TempsEchantionnage(unsigned long TIME)
@@ -79,7 +43,7 @@ Asservissement::Asservissement(Gladiator* gladiator){
     ta = v_max / acc_max;
     d_max = v_max * v_max / acc_max;
 
-    goTo.Kp = 0.01f; goTo.Ki = 0.0f; goTo.Kd = 0.f;
+    goTo.Kp = 0.2f; goTo.Ki = 0.0f; goTo.Kd = 0.f;
     goTo.integral = 0; goTo.prev_error = 0;
 
     rotation.Kp = 1.8f; rotation.Ki = 0.001f; rotation.Kd = 0.01f;
@@ -90,8 +54,8 @@ Asservissement::Asservissement(Gladiator* gladiator){
     consvl = 0;
     consvr = 0;
 
-    kw = 0.5f;//3.f * 2.f;
-    kv = 0.5f;//0.75f * 2.f;
+    kw = 3.f;//3.f * 2.f;
+    kv = 0.75f;//0.75f * 2.f;
     erreurPos = 0.07f;
 
     etat_automate_depl = INITIALISATION;
