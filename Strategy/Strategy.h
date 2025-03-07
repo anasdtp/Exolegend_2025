@@ -13,8 +13,6 @@ public:
         WAIT,
         EXPLORE_BOMB,
         SURVIVAL,
-        EXPLOSION,
-        CLOSE_ENEMY,
         EXPLORE
     };
 

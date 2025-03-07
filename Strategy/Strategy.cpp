@@ -14,7 +14,6 @@ StateMachine::StateMachine(GameState *game)
 void StateMachine::reset()
 {
     currentState = State::WAIT;
-    currentState = State::WAIT;
     etat_exploration = 0;
 }
 
@@ -47,6 +46,7 @@ bool StateMachine::CloseMaxWall()
     // Le terrain rétrécit de 1 cellule à droite, à gauche, en haut et en bas toutes les 20 secondes.
     if (game->current_time % 20000 > 17000) // On se dirige vers le centre du labyrinthe si il reste 5 secondes avant le prochain retrécissement
     {
+        game->gladiator->log("void StateMachine::CloseMaxWall() : Prochain retrécissement dans 3 secondes");
         Position current_pos = game->gladiator->robot->getData().position;
         float next_wall_size = game->gladiator->maze->getCurrentMazeSize() - 0.5f;
         float min_x = (3 - next_wall_size) / 2, max_x = 3 - min_x, min_y = (3 - next_wall_size) / 2, max_y = 3 - min_y;
@@ -68,7 +68,7 @@ MazeSquare *StateMachine::getNearestBomb()
     float min_dist = 1000;
     MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
     MazeSquare *nearest_bomb = nullptr;
-    const int searchRadius = 5;  // On ne regarde que dans un carré de 5 cases autour de la position actuelle
+    const int searchRadius = 5; // On ne regarde que dans un carré de 5 cases autour de la position actuelle
 
     // Définir les bornes de la recherche en fonction des indices du carré courant
     uint8_t i_min = (current_square->i >= searchRadius ? current_square->i - searchRadius : 0);
@@ -81,7 +81,7 @@ MazeSquare *StateMachine::getNearestBomb()
         for (uint8_t j = j_min; j <= j_max; j++)
         {
             MazeSquare *square = game->gladiator->maze->getSquare(i, j);
-            if (square->coin.value)  // La case contient une bombe (ou coin, selon ta logique)
+            if (square->coin.value) // La case contient une bombe (ou coin, selon ta logique)
             {
                 float dist = getDistance(current_square, square);
                 if (dist < min_dist)
@@ -111,7 +111,8 @@ void StateMachine::strategy()
     {
     case State::WAIT:
     {
-        if(number_of_bombs){
+        if (number_of_bombs)
+        {
             game->gladiator->weapon->dropBombs(number_of_bombs);
         }
 
@@ -119,18 +120,20 @@ void StateMachine::strategy()
         {
             currentState = State::SURVIVAL;
         }
-        else if(game->motors->available()){
+        else if (game->motors->available())
+        {
             // if (f_close_enemy)
             // {
             //     currentState = State::CLOSE_ENEMY;
             // }
-            
+
             // else if (f_time_to_explode)
             // {
             //     currentState = State::EXPLOSION;
             // }
             // else
-            if (bomb){
+            if (bomb)
+            {
                 currentState = State::EXPLORE_BOMB;
             }
             else
@@ -139,7 +142,7 @@ void StateMachine::strategy()
             }
         }
     }
-        break;
+    break;
 
     case State::SURVIVAL:
     {
@@ -172,17 +175,18 @@ void StateMachine::strategy()
     case State::EXPLORE:
     {
         // On cherche où sont les bombes les plus proches et on s'y dirige et on les ramasse puis explose
-        Position currentPos = game->gladiator->robot->getData().position;
-        Position target = getNearestBomb();
-
-        SimplePath path = simpleAStar(game->gladiator, currentPos, target);
+        Position currentPos = game->gladiator->robot->getData().position; // me donne les distances en mètres
+        MazeSquare *nearest_bomb = getNearestBomb();
+        Position nearest_bomb_pos = getSquareCoor(nearest_bomb, game->squareSize);
+        SimplePath path = simpleAStar(game->gladiator, currentPos, nearest_bomb_pos);
         if (path.length > 0)
         {
             // Move robot through path.steps[0] to path.steps[path.length-1]
-            game->gladiator->log("Path found! Steps: %d", path.length);
-            game->gotoSquare(path.steps->x, path.steps->y);
-            break;
+            MazeSquare *nextPos = getMazeSquareCoor(path.steps[1], game->gladiator);
+            game->gotoSquare(nextPos);
         }
+        currentState = State::WAIT;
     }
+    break;
     }
 }
