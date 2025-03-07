@@ -54,9 +54,9 @@ Asservissement::Asservissement(Gladiator *gladiator)
     goTo.integral = 0;
     goTo.prev_error = 0;
 
-    rotation.Kp = 1.8f;
+    rotation.Kp = 4.f;
     rotation.Ki = 0.001f;
-    rotation.Kd = 0.01f;
+    rotation.Kd = 0.1f;
     rotation.integral = 0;
     rotation.prev_error = 0;
 
