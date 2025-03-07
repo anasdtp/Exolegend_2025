@@ -5,7 +5,6 @@
 #define max_parth_finder_size 32
 #endif
 
-
 struct coordonnees
 {
     int i;
@@ -30,6 +29,9 @@ public:
     RobotData er2Data;
 
     Position goal;
+
+    unsigned long start_time_match; // En millisecondes
+    unsigned long current_time;     // En millisecondes
 
     float squareSize;
 
