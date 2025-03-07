@@ -35,6 +35,8 @@ public:
     bool CloseMaxWall();
 
     bool TimeToExplode();
+
+    Position getNearestBomb();
 };
 
 #endif // STRATEGY_H
