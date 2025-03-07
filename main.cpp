@@ -9,7 +9,9 @@ GameState *game;
 StateMachine *statemachine;
 Asservissement *motors;
 
-int testPath[5][2] = {{1, 6}, {2,6}, {3, 6}, {4, 6}, {4, 6}};
+bool match_started = false;
+
+int testPath[5][2] = {{1, 6}, {2, 6}, {3, 6}, {4, 6}, {4, 6}};
 
 void reset();
 void setup()
@@ -32,18 +34,16 @@ void reset()
     gladiator->log("Call of reset function"); // GFA 4.5.1
     game->goal = gladiator->robot->getData().position;
     motors->setTargetPos(game->goal);
+    match_started = false;
 
-    
-
-//     for(int k = 0; k < 5; k++){
-//         int i = testPath[k][0];
-//         int j = testPath[k][1];
-//         game->gladiator->log("case à visitée :%d,%d", i, j);
-//         game->simplified_coord_list.path_coord[game->count].i = i;
-//         game->simplified_coord_list.path_coord[game->count].j = j;
-//         game->count = (game->count + 1)%max_parth_finder_size;
-//     }
-
+    //     for(int k = 0; k < 5; k++){
+    //         int i = testPath[k][0];
+    //         int j = testPath[k][1];
+    //         game->gladiator->log("case à visitée :%d,%d", i, j);
+    //         game->simplified_coord_list.path_coord[game->count].i = i;
+    //         game->simplified_coord_list.path_coord[game->count].j = j;
+    //         game->count = (game->count + 1)%max_parth_finder_size;
+    //     }
 }
 
 void loop()
@@ -51,8 +51,15 @@ void loop()
     if (gladiator->game->isStarted())
     { // tester si un match à déjà commencer
         // code de votre stratégie
+        if (match_started == false)
+        {
+            game->start_time_match = millis();
+            match_started = true;
+        }
+        game->current_time = (millis() - game->start_time_match);
+
         game->Update();
-        
+
         if (TempsEchantionnage(TE_MS))
         {
             motors->positionControl(motors->getTargetPos());
@@ -60,4 +67,3 @@ void loop()
         // robot_state_machine->machine();
     }
 }
-
