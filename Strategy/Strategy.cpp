@@ -12,7 +12,7 @@ StateMachine::StateMachine(GameState *game)
 
 void StateMachine::reset()
 {
-    currentState = State::EXPLORE;
+    currentState = State::EXPLORE_BOMB;
     etat_exploration = 0;
 }
 
@@ -43,7 +43,7 @@ bool StateMachine::CloseMaxWall()
     // On récupère les coordonnées max du labyrinthe, si il reste 5 secondes avant le prochain retrécissement
     // On se dirige vers le centre du labyrinthe
     // Le terrain rétrécit de 1 cellule à droite, à gauche, en haut et en bas toutes les 20 secondes.
-    if (game->current_time % 20000 < 3000) // On se dirige vers le centre du labyrinthe si il reste 5 secondes avant le prochain retrécissement
+    if (game->current_time % 20000 < 5000) // On se dirige vers le centre du labyrinthe si il reste 5 secondes avant le prochain retrécissement
     {
         Position current_pos = game->gladiator->robot->getData().position;
         float next_wall_size = game->gladiator->maze->getCurrentMazeSize() - 0.2f;
@@ -65,38 +65,38 @@ bool StateMachine::TimeToExplode()
 void StateMachine::strategy()
 {
 
-    bool f_close_enemy = CloseEnemy(0.5);
+    // bool f_close_enemy = CloseEnemy(0.5);
     bool f_close_max_wall = CloseMaxWall();
-    bool f_time_to_explode = TimeToExplode();
+    // bool f_time_to_explode = TimeToExplode();
 
     // game->gladiator->log("void StateMachine::transition() : Possède une fusée : %d", t_recherche_fusee);
 
     switch (currentState)
     {
     case State::WAIT:
-        if (f_close_enemy)
-        {
-            currentState = State::CLOSE_ENEMY;
-        }
-        else if (f_close_max_wall)
+        // if (f_close_enemy)
+        // {
+        //     currentState = State::CLOSE_ENEMY;
+        // }
+        if (f_close_max_wall)
         {
             currentState = State::SURVIVAL;
         }
-        else if (f_time_to_explode)
-        {
-            currentState = State::EXPLOSION;
-        }
+        // else if (f_time_to_explode)
+        // {
+        //     currentState = State::EXPLOSION;
+        // }
         else
         {
-            currentState = State::EXPLORE;
+            currentState = State::EXPLORE_BOMB;
         }
         break;
 
     case State::SURVIVAL:
     {
         MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
-        uint8_t sg_x = 1;
-        uint8_t sg_y = 1;
+        int sg_x = 1;
+        int sg_y = -1;
         if (current_square->i > 6)
         {
             sg_x = -1;
@@ -107,11 +107,14 @@ void StateMachine::strategy()
         }
         MazeSquare target_square = {current_square->i + sg_x, current_square->j + sg_y};
         game->gotoSquare(&target_square);
+        currentState = State::WAIT;
     }
     break;
 
-    case State::EXPLORE:
+    case State::EXPLORE_BOMB:
     {
+        // On cherche où sont les bombes les plus proches et on s'y dirige et on les ramasse puis explose
+        currentState = State::WAIT;
     }
     break;
     }

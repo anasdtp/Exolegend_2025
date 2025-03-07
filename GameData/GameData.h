@@ -22,7 +22,6 @@ class GameState
 public:
     Gladiator *gladiator;
     Asservissement *motors;
-
     RobotData myData;
     RobotData allyData;
     RobotData er1Data;
@@ -38,6 +37,8 @@ public:
     int count;
     pathFinder coord_list;
     pathFinder simplified_coord_list;
+
+    uint8_t bomb_square[12][12];
 
     GameState(Gladiator *gladiator, Asservissement *motors);
 

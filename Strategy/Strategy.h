@@ -11,7 +11,7 @@ public:
     enum State
     {
         WAIT,
-        EXPLORE,
+        EXPLORE_BOMB,
         SURVIVAL,
         EXPLOSION,
         CLOSE_ENEMY,

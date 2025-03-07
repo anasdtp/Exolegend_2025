@@ -59,6 +59,8 @@ void loop()
         game->current_time = (millis() - game->start_time_match);
 
         game->Update();
+        statemachine->strategy();
+        gladiator->log("targetpos : %f", motors->getTargetPos().x);
 
         if (TempsEchantionnage(TE_MS))
         {
