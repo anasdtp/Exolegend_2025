@@ -154,13 +154,14 @@ void StateMachine::strategy()
         Position currentPos = game->gladiator->robot->getData().position;
         Position target = getNearestBomb();
 
-        Path path = aStarPathfinding(game->gladiator, currentPos, target);
-        if (path.size > 0)
+        SimplePath path = simpleAStar(game->gladiator, currentPos, target);
+        if (path.length > 0)
         {
-            game->gladiator->log("Path found with %s", String(path.size), " steps");
-            currentState = State::WAIT;
+            // Move robot through path.steps[0] to path.steps[path.length-1]
+            game->gladiator->log("Path found! Steps: %d", path.length);
+            game->gotoSquare(path.steps->x, path.steps->y);
+            break;
         }
-        break;
     }
     }
 }
