@@ -1,13 +1,14 @@
 #include "AStar.h"
+float WALL_WEIGHT = 10000.0f;
 
-float heuristic_rotation(Gladiator *gladiator, MazeSquare *neighbor)
+float heuristic_rotation(Gladiator *gladiator, byte ni, byte nj)
 {
     Position current_pos = gladiator->robot->getData().position;
     MazeSquare *robot_square = getMazeSquareCoor(current_pos, gladiator);
 
     float angle_to_turn;
-    uint8_t i_n = neighbor->i;
-    uint8_t j_n = neighbor->j;
+    uint8_t i_n = ni;
+    uint8_t j_n = nj;
     uint8_t i_r = robot_square->i;
     uint8_t j_r = robot_square->j;
     float round_current_orientation;
@@ -62,13 +63,12 @@ float heuristic_rotation(Gladiator *gladiator, MazeSquare *neighbor)
     return angle_cost;
 }
 
-float complete_heurisic(Gladiator *gladiator, MazeSquare *neighbor) // Possession ennemi, donc id de la team, position bombe et explosion
+float complete_heurisic(Gladiator *gladiator, byte ni, byte nj)
 {
-    float bomb_cost = 2 * float(neighbor->danger);
-    float distance_cost = 1;
-    float angle_cost = heuristic_rotation(gladiator, neighbor);
-
-    return bomb_cost + distance_cost + angle_cost;
+    MazeSquare *square = gladiator->maze->getSquare(ni, nj);
+    float bomb_cost = (square != nullptr) ? 2 * square->danger : 0;
+    float angle_cost = heuristic_rotation(gladiator, ni, nj);
+    return bomb_cost + angle_cost + 1; // +1 for distance
 }
 
 // Simplified A* Implementation
@@ -144,37 +144,56 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
         static const int dx[4] = {0, 0, 1, -1};
         static const int dy[4] = {1, -1, 0, 0};
 
+        MazeSquare *square = gladiator->maze->getSquare(current.i, current.j);
+        MazeSquare *neighbors[4] = {
+            square->northSquare, square->southSquare,
+            square->eastSquare, square->westSquare};
+
         for (int dir = 0; dir < 4; dir++)
         {
-            MazeSquare *neighbor = gladiator->maze->getSquare(current.i + dx[dir], current.j + dy[dir]);
+            // Inside the neighbor loop:
+            byte ni = current.i + dx[dir];
+            byte nj = current.j + dy[dir];
 
-            if (!neighbor || visited[neighbor->i][neighbor->j])
+            // Skip out-of-bounds or visited nodes
+            if (ni >= 12 || nj >= 12 || visited[ni][nj])
                 continue;
 
-            float move_cost = current.total_cost + CELL_SIZE;
-            float total_cost = complete_heurisic(gladiator, neighbor) + move_cost;
+            MazeSquare *neighbor = neighbors[dir];
+            bool isWall = (neighbor == nullptr);
 
+            float move_cost = current.total_cost + CELL_SIZE;
+            if (isWall)
+            {
+                move_cost += WALL_WEIGHT; // Apply penalty
+                neighbor = gladiator->maze->getSquare(ni, nj);
+            }
+
+            float heuristic = complete_heurisic(gladiator, ni, nj);
+            float total_cost = move_cost + heuristic;
+
+            // Update or add to open list
             bool exists = false;
             for (int i = 0; i < openCount; i++)
             {
-                if (openList[i].i == neighbor->i && openList[i].j == neighbor->j)
+                if (openList[i].i == ni && openList[i].j == nj)
                 {
                     exists = true;
                     if (total_cost < openList[i].total_cost)
                     {
                         openList[i].total_cost = total_cost;
-                        parent_i[neighbor->i][neighbor->j] = current.i;
-                        parent_j[neighbor->i][neighbor->j] = current.j;
+                        parent_i[ni][nj] = current.i;
+                        parent_j[ni][nj] = current.j;
                     }
                     break;
                 }
             }
 
-            if (!exists)
+            if (!exists && openCount < 144)
             {
-                openList[openCount++] = {neighbor->i, neighbor->j, total_cost};
-                parent_i[neighbor->i][neighbor->j] = current.i;
-                parent_j[neighbor->i][neighbor->j] = current.j;
+                openList[openCount++] = {ni, nj, total_cost};
+                parent_i[ni][nj] = current.i;
+                parent_j[ni][nj] = current.j;
             }
         }
 
