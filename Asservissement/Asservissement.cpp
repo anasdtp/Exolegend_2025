@@ -42,12 +42,12 @@ Asservissement::Asservissement(Gladiator *gladiator)
 {
     this->gladiator = gladiator;
 
-    v_max = 1.f; acc_max = 0.7f;
+    v_max = 1.f; acc_max = 0.5f;
     
     ta = v_max / acc_max;
     d_max = v_max * v_max / acc_max;
 
-    goTo.Kp = 0.2f;
+    goTo.Kp = 0.22f;
     goTo.Ki = 0.0f;
     goTo.Kd = 0.f;
     goTo.integral = 0;
@@ -64,9 +64,8 @@ Asservissement::Asservissement(Gladiator *gladiator)
     consvl = 0;
     consvr = 0;
 
-    kw = 3.f * 2.f;
-    kv = 0.75f * 2.f;
-    erreurPos = 0.07f;
+    kw = 3.f * 1.3f;
+    kv = 0.75f * 1.3f;
 
     etat_automate_depl = INITIALISATION;
     flag_available = true;
@@ -170,7 +169,7 @@ void Asservissement::positionControl(Position targetPos)
             etat_automate_depl = GO_TO_POS;
             float dx = targetPos.x - currentPos.x;
             float dy = targetPos.y - currentPos.y;
-            float angleDifference = atan2(dy, dx);
+            float angleDifference = reductionAngle(atan2(dy, dx));
             ta = v_max / acc_max;
             d_max = v_max * v_max / acc_max;
             traj = fnVitesse2(currentPos, targetPos);
@@ -178,7 +177,7 @@ void Asservissement::positionControl(Position targetPos)
             if (abs(angleDifference) > toleranceAngle)
             {
                 // Calcul de l'angle cible
-                target_angle = angleDifference;
+                target_angle = (angleDifference);
                 etat_automate_depl = ROTATION;
 
                 Serial.println("case INITIALISATION -> ROTATION");
@@ -220,7 +219,7 @@ void Asservissement::positionControl(Position targetPos)
         float dy = targetPos.y - currentPos.y;
         float d = sqrt((dx * dx) + (dy * dy));
 
-        if (d > erreurPos)
+        if (d > Threshold)
         {
             float rho = atan2(dy, dx);
             float consw = kw * reductionAngle(rho - currentPos.a);

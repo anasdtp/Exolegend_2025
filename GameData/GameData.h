@@ -32,4 +32,8 @@ public:
     void reset();
 
     void gotoSquare(MazeSquare *square);
+
+    Position getCurrentPosition();
+
+    MazeSquare *getCurrentSquare();
 };

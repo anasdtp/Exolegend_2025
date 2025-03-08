@@ -42,6 +42,18 @@ void GameState::reset()
     }
 
     squareSize = gladiator->maze->getSquareSize();
+
+    switch (myData.id)
+    {
+    case 128:
+        gladiator->robot->setCalibrationOffset(0.108f, -0.0036f, 0.f);
+        break;
+    case 131:
+        gladiator->robot->setCalibrationOffset(-0.0009, -0.0004, 0.f);
+        break;
+    default:
+        break;
+    }
 }
 
 void GameState::gotoSquare(MazeSquare *square)
@@ -49,4 +61,8 @@ void GameState::gotoSquare(MazeSquare *square)
     goal = getSquareCoor(square, squareSize);
 
     motors->setTargetPos(goal);
+}
+
+MazeSquare *GameState::getCurrentSquare(){
+    return getMazeSquareCoor(gladiator->robot->getData().position, gladiator);
 }

@@ -74,7 +74,7 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
                 path.steps[k] = path.steps[path.length - 1 - k];
                 path.steps[path.length - 1 - k] = temp;
             }
-            return path;
+            return simplifyPath(path);
         }
 
         visited[current.i][current.j] = true;
@@ -126,5 +126,35 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
         // Remove processed node
         openList[bestIndex] = openList[--openCount];
     }
-    return path; // Empty if no path found
+
+
+    return simplifyPath(path); // Empty if no path found
+}
+
+SimplePath simplifyPath(const SimplePath &originalPath)
+{
+    SimplePath simplifiedPath;
+    if (originalPath.length == 0)
+        return simplifiedPath; // Retourne un chemin vide si aucun chemin n'a été trouvé
+
+    // Ajouter le premier point (départ)
+    simplifiedPath.steps[simplifiedPath.length++] = originalPath.steps[0];
+
+    for (int i = 1; i < originalPath.length-1; i++)
+    {
+        Position previous = originalPath.steps[i - 1];
+        Position current = originalPath.steps[i];
+        Position next = originalPath.steps[i + 1];
+
+        // Si la direction change, ajouter ce point au chemin simplifié
+        if ( ! ((previous.x == current.x && current.x == next.x) || (previous.y == current.y && current.y == next.y)))
+        {
+            simplifiedPath.steps[simplifiedPath.length++] = current;
+        }
+    }
+
+    // Ajouter le dernier point (arrivée)
+    simplifiedPath.steps[simplifiedPath.length++] = originalPath.steps[originalPath.length - 1];
+
+    return simplifiedPath;
 }

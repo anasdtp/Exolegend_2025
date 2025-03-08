@@ -46,12 +46,12 @@ private:
 
     float robot_radius;
 
-    float Threshold = 0.01f, toleranceAngle = 8.f * PI/180.f; // Adjust as needed
-    float consvl = 0.f, consvr = 0.f;
+    float Threshold;
+    float toleranceAngle;// = 8.f * PI/180.f; // Adjust as needed
+    float consvl, consvr;
 
-    float kw = 3.f * 2.f;
-    float kv = 0.75f * 2.f;
-    float erreurPos = 0.07f;
+    float kw;// = 3.f * 2.f;
+    float kv;// = 0.75f * 2.f;
 
     unsigned long start_time;
     float dt;
