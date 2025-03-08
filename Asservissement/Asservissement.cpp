@@ -1,28 +1,5 @@
 #include "Asservissement.h"
 
-bool isAWallInFrontOfMe(Position pos, Gladiator *gladiator)
-{
-    MazeSquare *currentSquare = getMazeSquareCoor(pos, gladiator);
-
-    // Déterminer la direction du déplacement
-    if ((pos.a >= -PI / 4 && pos.a < PI / 4))
-    { // Vers l'Est (droite)
-        return currentSquare->eastSquare == NULL;
-    }
-    else if (pos.a >= PI / 4 && pos.a < 3 * PI / 4)
-    { // Vers le Nord (haut)
-        return currentSquare->northSquare == NULL;
-    }
-    else if ((pos.a >= 3 * PI / 4 || pos.a < -3 * PI / 4))
-    { // Vers l'Ouest (gauche)
-        return currentSquare->westSquare == NULL;
-    }
-    else
-    { // Vers le Sud (bas)
-        return currentSquare->southSquare == NULL;
-    }
-}
-
 bool TempsEchantionnage(unsigned long TIME)
 { // ms
     static unsigned long LastMscount = millis();

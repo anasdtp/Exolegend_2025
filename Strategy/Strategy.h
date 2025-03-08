@@ -17,6 +17,13 @@ public:
 
     GameState *game;
     State currentState;
+    MazeSquare *square;
+    RobotData data;
+    MazeSquare *target_square;
+    MazeSquare *current_square;
+    MazeSquare *nearest_bomb;
+    MazeSquare *nextPos;
+    MazeSquare *neighbors_strat[5];
 
     int etat_exploration;
 

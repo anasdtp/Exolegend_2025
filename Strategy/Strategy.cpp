@@ -9,6 +9,17 @@ StateMachine::StateMachine(GameState *game)
 
     currentState = State::WAIT;
     etat_exploration = 0;
+    square = nullptr;
+    data = game->gladiator->robot->getData();
+    target_square = nullptr;
+    current_square = nullptr;
+    nearest_bomb = nullptr;
+    nextPos = nullptr;
+    neighbors_strat[4] = square;
+    neighbors_strat[0] = nullptr;
+    neighbors_strat[1] = nullptr;
+    neighbors_strat[2] = nullptr;
+    neighbors_strat[3] = nullptr;
 }
 
 void StateMachine::reset()
@@ -151,31 +162,28 @@ void StateMachine::strategy()
 
     // bool f_close_enemy = CloseEnemy(0.5);
     bool f_close_max_wall = CloseMaxWall();
-    bool bomb = false;
     int number_of_bombs = game->gladiator->weapon->getBombCount();
     // bool f_time_to_explode = TimeToExplode();
 
-    // game->gladiator->log("void StateMachine::transition() : Possède une fusée : %d", t_recherche_fusee);
-    // bool f_time_to_explode = TimeToExplode();
-
-    RobotData data = game->gladiator->robot->getData();
-    unsigned char robotId = data.id;
-    MazeSquare *square = game->gladiator->maze->getNearestSquare();
-    MazeSquare *neighbors[5] = {
-        square->northSquare, square->southSquare,
-        square->eastSquare, square->westSquare, square};
+    data = game->gladiator->robot->getData();
+    square = game->gladiator->maze->getNearestSquare();
+    neighbors_strat[0] = square->northSquare;
+    neighbors_strat[1] = square->southSquare;
+    neighbors_strat[2] = square->eastSquare;
+    neighbors_strat[3] = square->westSquare;
+    neighbors_strat[4] = square;
 
     int sum = 0;
     for (int dir = 0; dir < 4; dir++)
     {
-        if (neighbors[dir] == nullptr) // if we have a wall
+        if (neighbors_strat[dir] == nullptr) // if we have a wall
             continue;
 
-        if (neighbors[dir]->possession != '0' && neighbors[dir]->possession != game->gladiator->robot->getData().teamId)
+        if (neighbors_strat[dir]->possession != '0' && neighbors_strat[dir]->possession != game->gladiator->robot->getData().teamId)
         { // if colored by the other team
             sum += 2;
         }
-        if (neighbors[dir]->possession == '0')
+        if (neighbors_strat[dir]->possession == '0')
         { // if colored by the other team
             sum += 1;
         }
@@ -197,7 +205,7 @@ void StateMachine::strategy()
         {
             currentState = State::SURVIVAL;
         }
-        else
+        else if (game->motors->available())
         {
             currentState = State::EXPLORE;
         }
@@ -206,7 +214,7 @@ void StateMachine::strategy()
 
     case State::SURVIVAL:
     {
-        MazeSquare *target_square = getSafeSquare();
+        target_square = getSafeSquare();
         game->gotoSquare(target_square);
         currentState = State::WAIT;
     }
@@ -215,8 +223,8 @@ void StateMachine::strategy()
     case State::EXPLORE:
     {
         // On cherche où sont les bombes les plus proches et on s'y dirige et on les ramasse puis explose
-        MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator); // me donne les distances en mètres
-        MazeSquare *nearest_bomb = getBestBomb();
+        current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator); // me donne les distances en mètres
+        nearest_bomb = getBestBomb();
         game->gladiator->log("Nearest bomb %d", nearest_bomb->i);
 
         SimplePath path = simpleAStar(game->gladiator, current_square, nearest_bomb);
@@ -225,12 +233,12 @@ void StateMachine::strategy()
             if (path.length > 1)
             {
                 // Move robot through path.steps[0] to path.steps[path.length-1] // Remlacer par path.length-1 pour aller direct sur les bombes (pas besoin du else dans ce cas)
-                MazeSquare *nextPos = getMazeSquareCoor(path.steps[1], game->gladiator);
+                nextPos = getMazeSquareCoor(path.steps[1], game->gladiator);
                 game->gotoSquare(nextPos);
             }
             else
             {
-                MazeSquare *nextPos = getMazeSquareCoor(path.steps[0], game->gladiator);
+                nextPos = getMazeSquareCoor(path.steps[0], game->gladiator);
                 game->gotoSquare(nextPos);
             }
         }

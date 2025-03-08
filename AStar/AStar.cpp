@@ -1,10 +1,16 @@
 #include "AStar.h"
 float WALL_WEIGHT = 10.0f;
 
+MazeSquare *square;
+MazeSquare *square_heuresique;
+MazeSquare *neighbors[4];
+MazeSquare *neighbor;
+MazeSquare *robot_square;
+
 float heuristic_rotation(Gladiator *gladiator, byte ni, byte nj)
 {
     Position current_pos = gladiator->robot->getData().position;
-    MazeSquare *robot_square = getMazeSquareCoor(current_pos, gladiator);
+    robot_square = getMazeSquareCoor(current_pos, gladiator);
 
     float angle_to_turn;
     uint8_t i_n = ni;
@@ -65,7 +71,7 @@ float heuristic_rotation(Gladiator *gladiator, byte ni, byte nj)
 
 float complete_heurisic(Gladiator *gladiator, byte ni, byte nj)
 {
-    MazeSquare *square = gladiator->maze->getSquare(ni, nj);
+    square_heuresique = gladiator->maze->getSquare(ni, nj);
     float bomb_cost = (square != nullptr) ? 2 * square->danger : 0;
     float angle_cost = heuristic_rotation(gladiator, ni, nj);
     return bomb_cost + angle_cost + 1; // +1 for distance
@@ -76,6 +82,12 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
 {
     SimplePath path;
     path.length = 0;
+    square = nullptr;
+    neighbor = nullptr;
+    neighbors[0] = nullptr;
+    neighbors[1] = nullptr;
+    neighbors[2] = nullptr;
+    neighbors[3] = nullptr;
     float CELL_SIZE = gladiator->maze->getSquareSize();
 
     Position start = getSquareCoor(current_square, CELL_SIZE);
@@ -144,10 +156,11 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
         static const int dx[4] = {0, 0, 1, -1};
         static const int dy[4] = {1, -1, 0, 0};
 
-        MazeSquare *square = gladiator->maze->getSquare(current.i, current.j);
-        MazeSquare *neighbors[4] = {
-            square->northSquare, square->southSquare,
-            square->eastSquare, square->westSquare};
+        square = gladiator->maze->getSquare(current.i, current.j);
+        neighbors[0] = square->northSquare;
+        neighbors[1] = square->southSquare;
+        neighbors[2] = square->eastSquare;
+        neighbors[3] = square->westSquare;
 
         for (int dir = 0; dir < 4; dir++)
         {
@@ -159,7 +172,7 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
             if (ni >= 12 || nj >= 12 || visited[ni][nj])
                 continue;
 
-            MazeSquare *neighbor = neighbors[dir];
+            neighbor = neighbors[dir];
             bool isWall = (neighbor == nullptr);
 
             float move_cost = current.total_cost + CELL_SIZE;

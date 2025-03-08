@@ -57,7 +57,7 @@ void loop()
 
         if (TempsEchantionnage(TE_MS))
         {
-            gladiator->log("Pos.x : %d", motors->getTargetPos().x);
+            gladiator->log("Pos.x : %d", int(motors->getTargetPos().x));
             motors->positionControl(motors->getTargetPos());
         }
         // robot_state_machine->machine();
