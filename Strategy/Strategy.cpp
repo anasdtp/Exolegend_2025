@@ -25,7 +25,6 @@ bool StateMachine::CloseEnemy(float dist_thresh)
     RobotList ids_list = game->gladiator->game->getPlayingRobotsId();
     for (int i = 0; i < 4; i++)
     {
-
         if (ids_list.ids[i] != 121 && ids_list.ids[i] != 120)
         {
             RobotData others_data = game->gladiator->game->getOtherRobotData(ids_list.ids[i]);
@@ -70,7 +69,15 @@ MazeSquare *StateMachine::getBestBomb()
     MazeSquare *nearest_bomb = nullptr;
 
     int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / 0.25);
-    int min_index = (12 - next_maze_size) / 2, max_index = 12 - min_index - 1;
+    int min_index = 0, max_index = 12;
+    if (game->current_time % 20000 == 13000) // S'il reste 7 secondes avant la fin on ne cherche pas une case sur les bouts du cadre
+    {
+        min_index = (12 - next_maze_size) / 2 - 1, max_index = 12 - min_index - 1 + 1;
+    }
+    else // S'il reste 7 secondes avant la fin on ne cherche pas une case sur les bouts du cadre
+    {
+        min_index = (12 - next_maze_size) / 2, max_index = 12 - min_index - 1;
+    }
 
     for (uint8_t i = min_index + 1; i < max_index; i++)
     {

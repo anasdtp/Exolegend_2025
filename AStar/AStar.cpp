@@ -1,5 +1,5 @@
 #include "AStar.h"
-float WALL_WEIGHT = 10000.0f;
+float WALL_WEIGHT = 5.0f;
 
 float heuristic_rotation(Gladiator *gladiator, byte ni, byte nj)
 {
