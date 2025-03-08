@@ -47,25 +47,25 @@ Asservissement::Asservissement(Gladiator *gladiator)
     ta = v_max / acc_max;
     d_max = v_max * v_max / acc_max;
 
-    goTo.Kp = 0.22f;
+    goTo.Kp = 0.15f;
     goTo.Ki = 0.0f;
-    goTo.Kd = 0.f;
+    goTo.Kd = 0.012f;
     goTo.integral = 0;
     goTo.prev_error = 0;
 
-    rotation.Kp = 4.f;
+    rotation.Kp = 3.5f;
     rotation.Ki = 0.001f;
     rotation.Kd = 0.1f;
     rotation.integral = 0;
     rotation.prev_error = 0;
 
     Threshold = 0.05f;
-    toleranceAngle = 8.f * PI / 180.f;
+    toleranceAngle = 6.f * PI / 180.f;
     consvl = 0;
     consvr = 0;
 
-    kw = 3.f * 1.3f;
-    kv = 0.75f * 1.3f;
+    kw = 3.f * 0.9f;
+    kv = 0.75f * 0.9f;
 
     etat_automate_depl = INITIALISATION;
     flag_available = true;
@@ -293,6 +293,7 @@ void Asservissement::positionControl(Position targetPos)
             consvr = 0;
             consvl = 0;
             etat_automate_depl = GO_TO_POS;
+            start_time = millis();
             // Serial.println("case ROTATION -> GO_TO_POS\n");
         }
     }
