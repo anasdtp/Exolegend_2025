@@ -37,9 +37,9 @@ public:
 
     bool TimeToExplode();
 
-    MazeSquare *getNearestBomb();
+    MazeSquare *getBestBomb();
 
-    Position locateOpponents(Gladiator* gladiator);
+    MazeSquare *getSafeSquare();
 };
 
 #endif // STRATEGY_H

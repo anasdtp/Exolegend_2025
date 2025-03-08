@@ -53,7 +53,7 @@ void loop()
         // gladiator->log("targetpos : %f", motors->getTargetPos().x);
         statemachine->strategy();
 
-        gladiator->log("targetpos : %f", motors->getTargetPos().y);
+        // gladiator->log("targetpos : %f", motors->getTargetPos().y);
 
         if (TempsEchantionnage(TE_MS))
         {
