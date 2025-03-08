@@ -56,6 +56,7 @@ private:
     unsigned long start_time;
     float dt;
 
+    float sens;
     float target_angle; //Pour l'etat ROTATION
 
     int etat_automate_depl = INITIALISATION;

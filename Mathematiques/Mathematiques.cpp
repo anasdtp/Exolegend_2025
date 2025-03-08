@@ -34,10 +34,10 @@ float getDistance(MazeSquare *s1, MazeSquare *s2)
 
 double reductionAngle(double x)
 {
-    x = fmod(x + PI, 2 * PI);
+    x = fmod(x + PI_F, 2 * PI_F);
     if (x < 0)
-        x += 2 * PI;
-    return x - PI;
+        x += 2 * PI_F;
+    return x - PI_F;
 }
 
 // Heuristique : distance de Manhattan

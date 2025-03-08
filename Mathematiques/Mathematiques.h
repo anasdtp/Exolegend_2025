@@ -2,6 +2,8 @@
 #define MATHEMATIQUES_H
 #include "gladiator.h"
 
+#define PI_F 3.1415926535897932384626433832795f
+
 Position getSquareCoor(const MazeSquare *square, float squareSize);
 Position getSquareCoor(uint8_t i, uint8_t j, float squareSize);
 MazeSquare *getMazeSquareCoor(const Position &pos, Gladiator *gladiator);
