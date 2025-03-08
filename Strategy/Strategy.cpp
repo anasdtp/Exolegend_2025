@@ -69,14 +69,14 @@ MazeSquare *StateMachine::getBestBomb()
     MazeSquare *nearest_bomb = nullptr;
 
     int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / 0.25);
-    int min_index = 0, max_index = 12;
+    int min_index = 0, max_index = 11;
     if (game->current_time % 20000 == 13000) // S'il reste 7 secondes avant la fin on ne cherche pas une case sur les bouts du cadre
     {
-        min_index = (12 - next_maze_size) / 2 - 1, max_index = 12 - min_index - 1 + 1;
+        min_index = (12 - next_maze_size) / 2 , max_index = 11 - min_index;
     }
     else // S'il reste 7 secondes avant la fin on ne cherche pas une case sur les bouts du cadre
     {
-        min_index = (12 - next_maze_size) / 2, max_index = 12 - min_index - 1;
+        min_index = (12 - next_maze_size) / 2 + 1, max_index = 11 - min_index +1;
     }
 
     for (uint8_t i = min_index ; i < max_index-1; i++)
@@ -96,7 +96,7 @@ MazeSquare *StateMachine::getBestBomb()
                 // La présence d'une bombe en cours diminue le score, et la présence d'une bombe non en cours augmente le score
                 // La présence d'une bombe non en cours diminue le score, et la présence d'une bombe en cours augmente le score
 
-                float score = -getDistance(current_square, square) + square->coin.value * 0.5f - square->danger * 3 - (square->possession == game->gladiator->robot->getData().teamId) * 0.5 + getDistance(square, centerSquare) * 50;
+                float score = -getDistance(current_square, square) + square->coin.value * 0.5f - square->danger * 1.0 - (square->possession == game->gladiator->robot->getData().teamId) * 1.0 + getDistance(square, centerSquare) * 0.5;
                 if (score > max_score)
                 {
                     max_score = score;

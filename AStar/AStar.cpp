@@ -1,5 +1,5 @@
 #include "AStar.h"
-float WALL_WEIGHT = 5.0f;
+float WALL_WEIGHT = 10.0f;
 
 float heuristic_rotation(Gladiator *gladiator, byte ni, byte nj)
 {
@@ -54,11 +54,11 @@ float heuristic_rotation(Gladiator *gladiator, byte ni, byte nj)
     float angle_cost{0};
     if (angle_to_turn == PI / 2 || angle_to_turn == -PI / 2)
     {
-        angle_cost = 6;
+        angle_cost = 10;
     }
     else if (angle_to_turn == PI)
     {
-        angle_cost = 12;
+        angle_cost = 20;
     }
     return angle_cost;
 }
