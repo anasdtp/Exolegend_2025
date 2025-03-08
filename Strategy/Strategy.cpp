@@ -46,7 +46,7 @@ bool StateMachine::CloseMaxWall()
     // Le terrain rétrécit de 1 cellule à droite, à gauche, en haut et en bas toutes les 20 secondes.
     if (game->current_time % 20000 > 17000) // On se dirige vers le centre du labyrinthe si il reste 5 secondes avant le prochain retrécissement
     {
-        game->gladiator->log("void StateMachine::CloseMaxWall() : Prochain retrécissement dans 3 secondes");
+        // game->gladiator->log("void StateMachine::CloseMaxWall() : Prochain retrécissement dans 3 secondes");
         Position current_pos = game->gladiator->robot->getData().position;
         float next_wall_size = game->gladiator->maze->getCurrentMazeSize() - 0.5f;
         float min_x = (3 - next_wall_size) / 2, max_x = 3 - min_x, min_y = (3 - next_wall_size) / 2, max_y = 3 - min_y;
@@ -182,7 +182,7 @@ void StateMachine::strategy()
         if (path.length > 0)
         {
             // Move robot through path.steps[0] to path.steps[path.length-1]
-            MazeSquare *nextPos = getMazeSquareCoor(path.steps[1], game->gladiator);
+            MazeSquare *nextPos = getMazeSquareCoor(path.steps[path.length - 1], game->gladiator);
             game->gotoSquare(nextPos);
         }
         currentState = State::WAIT;

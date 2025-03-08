@@ -8,6 +8,13 @@ struct SimplePath
     int length = 0;
 };
 
+float complete_heurisic(Gladiator *gladiator, MazeSquare *neighbor) // Possession ennemi, donc id de la team, position bombe et explosion
+{
+    float bomb_cost = float(neighbor->danger);
+    float distance_cost = 1;
+    return bomb_cost + distance_cost;
+}
+
 // Simplified A* Implementation
 SimplePath simpleAStar(Gladiator *gladiator, Position start, Position target)
 {
@@ -95,10 +102,8 @@ SimplePath simpleAStar(Gladiator *gladiator, Position start, Position target)
 
             // Calculate movement cost + heuristic
             float move_cost = current.total_cost + CELL_SIZE;
-            float dx = (target_i - neighbor->i) * CELL_SIZE;
-            float dy = (target_j - neighbor->j) * CELL_SIZE;
-            float heuristic = sqrt(dx * dx + dy * dy);
-            float total_cost = move_cost + heuristic;
+            // float complete_heurisic(Position(neighbor->i, neighbor->j), target);
+            float total_cost = complete_heurisic(gladiator, neighbor) + move_cost;
 
             // Update existing node or add new
             bool exists = false;
@@ -127,10 +132,8 @@ SimplePath simpleAStar(Gladiator *gladiator, Position start, Position target)
                 parent_j[neighbor->i][neighbor->j] = current.j;
             }
         }
-
         // Remove processed node
         openList[bestIndex] = openList[--openCount];
     }
-
     return path; // Empty if no path found
 }

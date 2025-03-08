@@ -11,8 +11,6 @@ Asservissement *motors;
 
 bool match_started = false;
 
-int testPath[5][2] = {{1, 6}, {2, 6}, {3, 6}, {4, 6}, {4, 6}};
-
 void reset();
 void setup()
 {
@@ -55,7 +53,7 @@ void loop()
         // gladiator->log("targetpos : %f", motors->getTargetPos().x);
         statemachine->strategy();
 
-        // gladiator->log("targetpos : %f", motors->getTargetPos().x);
+        gladiator->log("targetpos : %f", motors->getTargetPos().y);
 
         if (TempsEchantionnage(TE_MS))
         {

@@ -13,14 +13,6 @@ void GameState::Update()
     allyData = gladiator->game->getOtherRobotData(allyData.id);
     er1Data = gladiator->game->getOtherRobotData(er1Data.id);
     er2Data = gladiator->game->getOtherRobotData(er2Data.id);
-
-    for (int i = 0; i < 12; i++)
-    {
-        for (int j = 0; j < 12; j++)
-        {
-            bomb_square[i][j] = gladiator->maze->getSquare(i, j)->coin.value;
-        }
-    }
 }
 
 void GameState::reset()

@@ -26,8 +26,6 @@ public:
 
     MazeSquare *maze[SIZE][SIZE];
 
-    uint8_t bomb_square[12][12];
-
     GameState(Gladiator *gladiator, Asservissement *motors);
 
     void Update();
