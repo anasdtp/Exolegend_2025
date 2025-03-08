@@ -41,76 +41,57 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
     // Start with initial position
     openList[openCount++] = {start_i, start_j, 0};
 
-    while (openCount > 0)
-    {
-        // Find node with lowest total cost
+
+    while (openCount > 0) {
+        // Trouver le nœud avec le coût total le plus bas
         int bestIndex = 0;
-        for (int i = 1; i < openCount; i++)
-        {
+        for (int i = 1; i < openCount; i++) {
             if (openList[i].total_cost < openList[bestIndex].total_cost)
                 bestIndex = i;
         }
         Node current = openList[bestIndex];
-
-        // Path found - reconstruct
-        if (current.i == target_i && current.j == target_j)
-        {
+    
+        // Chemin trouvé - reconstruction
+        if (current.i == target_i && current.j == target_j) {
             byte i = current.i, j = current.j;
-            while (i != 0xFF)
-            { // Follow parent pointers
-                Position pos;
-                pos.x = (i + 0.5f) * CELL_SIZE; // Center of cell
-                pos.y = (j + 0.5f) * CELL_SIZE;
-                path.steps[path.length++] = pos;
-                byte pi = parent_i[i][j];
-                byte pj = parent_j[i][j];
+            while (i != 0xFF) { // Suivre les parents
+                path.steps[path.length++] = {
+                    (i + 0.5f) * CELL_SIZE,
+                    (j + 0.5f) * CELL_SIZE
+                };
+                byte pi = parent_i[i][j], pj = parent_j[i][j];
                 i = pi;
                 j = pj;
             }
-            // Reverse to get start->target order
-            for (int k = 0; k < path.length / 2; k++)
-            {
+            // Inversion pour obtenir l'ordre start → target
+            for (int k = 0; k < path.length / 2; k++) {
                 Position temp = path.steps[k];
                 path.steps[k] = path.steps[path.length - 1 - k];
                 path.steps[path.length - 1 - k] = temp;
             }
             return simplifyPath(path);
         }
-
+    
         visited[current.i][current.j] = true;
-
-        // Explore neighbors
-        MazeSquare *square = gladiator->maze->getSquare(current.i, current.j);
-        MazeSquare *neighbors[4] = {
-            square->northSquare, square->southSquare,
-            square->eastSquare, square->westSquare};
-
-        for (int dir = 0; dir < 4; dir++)
-        {
-            MazeSquare *neighbor = neighbors[dir];
-            if (!neighbor)
-            {
-                neighbor = gladiator->maze->getSquare(current.i, current.j + 1);
-            }
-            else if(visited[neighbor->i][neighbor->j])
-            {
+    
+        // Exploration des voisins directement sans tableau temporaire
+        static const int dx[4] = {0, 0, 1, -1};
+        static const int dy[4] = {1, -1, 0, 0};
+    
+        for (int dir = 0; dir < 4; dir++) {
+            MazeSquare *neighbor = gladiator->maze->getSquare(current.i + dx[dir], current.j + dy[dir]);
+    
+            if (!neighbor || visited[neighbor->i][neighbor->j])
                 continue;
-            }
-
-            // Calculate movement cost + heuristic
+    
             float move_cost = current.total_cost + CELL_SIZE;
-            // float complete_heurisic(Position(neighbor->i, neighbor->j), target);
             float total_cost = complete_heurisic(gladiator, neighbor) + move_cost;
-
-            // Update existing node or add new
+    
             bool exists = false;
-            for (int i = 0; i < openCount; i++)
-            {
-                if (openList[i].i == neighbor->i && openList[i].j == neighbor->j)
-                {
+            for (int i = 0; i < openCount; i++) {
+                if (openList[i].i == neighbor->i && openList[i].j == neighbor->j) {
                     exists = true;
-                    if (total_cost < openList[i].total_cost)
-                    {
+                    if (total_cost < openList[i].total_cost) {
                         openList[i].total_cost = total_cost;
                         parent_i[neighbor->i][neighbor->j] = current.i;
                         parent_j[neighbor->i][neighbor->j] = current.j;
@@ -118,20 +99,18 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
                     break;
                 }
             }
-
-            if (!exists)
-            {
-                openList[openCount++] = {
-                    neighbor->i,
-                    neighbor->j,
-                    total_cost};
+    
+            if (!exists) {
+                openList[openCount++] = {neighbor->i, neighbor->j, total_cost};
                 parent_i[neighbor->i][neighbor->j] = current.i;
                 parent_j[neighbor->i][neighbor->j] = current.j;
             }
         }
-        // Remove processed node
+    
+        // Supprimer le nœud traité
         openList[bestIndex] = openList[--openCount];
     }
+    
 
 
     return simplifyPath(path); // Empty if no path found
