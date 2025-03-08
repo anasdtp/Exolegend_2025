@@ -13,7 +13,9 @@ public:
         WAIT,
         EXPLORE_BOMB,
         SURVIVAL,
-        EXPLORE
+        EXPLORE,
+        ATTACK,
+        EVADE
     };
 
     GameState *game;
@@ -36,6 +38,8 @@ public:
     bool TimeToExplode();
 
     MazeSquare *getNearestBomb();
+
+    Position locateOpponents(Gladiator* gladiator);
 };
 
 #endif // STRATEGY_H
