@@ -181,9 +181,17 @@ void StateMachine::strategy()
         SimplePath path = simpleAStar(game->gladiator, currentPos, nearest_bomb_pos);
         if (path.length > 0)
         {
-            // Move robot through path.steps[0] to path.steps[path.length-1]
-            MazeSquare *nextPos = getMazeSquareCoor(path.steps[path.length - 1], game->gladiator);
-            game->gotoSquare(nextPos);
+            if (path.length > 1)
+            {
+                // Move robot through path.steps[0] to path.steps[path.length-1] // Remlacer par path.length-1 pour aller direct sur les bombes (pas besoin du else dans ce cas)
+                MazeSquare *nextPos = getMazeSquareCoor(path.steps[1], game->gladiator);
+                game->gotoSquare(nextPos);
+            }
+            else
+            {
+                MazeSquare *nextPos = getMazeSquareCoor(path.steps[0], game->gladiator);
+                game->gotoSquare(nextPos);
+            }
         }
         currentState = State::WAIT;
     }
