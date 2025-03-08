@@ -62,68 +62,6 @@ float heuristic_rotation(Gladiator *gladiator, MazeSquare *neighbor)
     return angle_cost;
 }
 
-float heuristic_rotation(Gladiator *gladiator, MazeSquare *neighbor)
-{
-    Position current_pos = gladiator->robot->getData().position;
-    MazeSquare *robot_square = getMazeSquareCoor(current_pos, gladiator);
-
-    float angle_to_turn;
-    uint8_t i_n = neighbor->i;
-    uint8_t j_n = neighbor->j;
-    uint8_t i_r = robot_square->i;
-    uint8_t j_r = robot_square->j;
-    float round_current_orientation;
-    if (current_pos.a < PI / 4 && current_pos.a > -PI / 4)
-    {
-        round_current_orientation = 0;
-    }
-    else if (current_pos.a < 3 * PI / 4 && current_pos.a > PI / 4)
-    {
-        round_current_orientation = PI / 2;
-    }
-    else if (current_pos.a < -3 * PI / 4 && current_pos.a > 3 * PI / 4)
-    {
-        round_current_orientation = -PI;
-    }
-    else if (current_pos.a < -PI / 4 && current_pos.a > -3 * PI / 4)
-    {
-        round_current_orientation = -PI / 2;
-    }
-
-    if (i_n == i_r)
-    {
-        if (j_n - j_r == 1)
-        {
-            angle_to_turn = -(round_current_orientation - 0);
-        }
-        else if (j_n - j_r == -1)
-        {
-            angle_to_turn = -(round_current_orientation - PI);
-        }
-    }
-    else if (j_n == j_r)
-    {
-        if (i_n - i_r == 1)
-        {
-            angle_to_turn = -(round_current_orientation - (-PI / 2));
-        }
-        else if (i_n - i_r == -1)
-        {
-            angle_to_turn = -(round_current_orientation - (PI / 2));
-        }
-    }
-    float angle_cost{0};
-    if (angle_to_turn == PI / 2 || angle_to_turn == -PI / 2)
-    {
-        angle_cost = 6;
-    }
-    else if (angle_to_turn == PI)
-    {
-        angle_cost = 12;
-    }
-    return angle_cost;
-}
-
 float complete_heurisic(Gladiator *gladiator, MazeSquare *neighbor) // Possession ennemi, donc id de la team, position bombe et explosion
 {
     float bomb_cost = 2 * float(neighbor->danger);
