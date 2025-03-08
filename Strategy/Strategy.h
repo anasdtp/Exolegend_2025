@@ -36,6 +36,8 @@ public:
     bool TimeToExplode();
 
     MazeSquare *getBestBomb();
+
+    MazeSquare *getSafeSquare();
 };
 
 #endif // STRATEGY_H
