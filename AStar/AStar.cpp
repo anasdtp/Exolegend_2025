@@ -1,10 +1,74 @@
 #include "AStar.h"
 
+float heuristic_rotation(Gladiator *gladiator, MazeSquare *neighbor)
+{
+    Position current_pos = gladiator->robot->getData().position;
+    MazeSquare *robot_square = getMazeSquareCoor(current_pos, gladiator);
+
+    float angle_to_turn;
+    uint8_t i_n = neighbor->i;
+    uint8_t j_n = neighbor->j;
+    uint8_t i_r = robot_square->i;
+    uint8_t j_r = robot_square->j;
+    float round_current_orientation;
+    if (current_pos.a < PI / 4 && current_pos.a > -PI / 4)
+    {
+        round_current_orientation = 0;
+    }
+    else if (current_pos.a < 3 * PI / 4 && current_pos.a > PI / 4)
+    {
+        round_current_orientation = PI / 2;
+    }
+    else if (current_pos.a < -3 * PI / 4 && current_pos.a > 3 * PI / 4)
+    {
+        round_current_orientation = -PI;
+    }
+    else if (current_pos.a < -PI / 4 && current_pos.a > -3 * PI / 4)
+    {
+        round_current_orientation = -PI / 2;
+    }
+
+    if (i_n == i_r)
+    {
+        if (j_n - j_r == 1)
+        {
+            angle_to_turn = -(round_current_orientation - 0);
+        }
+        else if (j_n - j_r == -1)
+        {
+            angle_to_turn = -(round_current_orientation - PI);
+        }
+    }
+    else if (j_n == j_r)
+    {
+        if (i_n - i_r == 1)
+        {
+            angle_to_turn = -(round_current_orientation - (-PI / 2));
+        }
+        else if (i_n - i_r == -1)
+        {
+            angle_to_turn = -(round_current_orientation - (PI / 2));
+        }
+    }
+    float angle_cost{0};
+    if (angle_to_turn == PI / 2 || angle_to_turn == -PI / 2)
+    {
+        angle_cost = 6;
+    }
+    else if (angle_to_turn == PI)
+    {
+        angle_cost = 12;
+    }
+    return angle_cost;
+}
+
 float complete_heurisic(Gladiator *gladiator, MazeSquare *neighbor) // Possession ennemi, donc id de la team, position bombe et explosion
 {
-    float bomb_cost = float(neighbor->danger);
+    float bomb_cost = 2 * float(neighbor->danger);
     float distance_cost = 1;
-    return bomb_cost + distance_cost;
+    float angle_cost = heuristic_rotation(gladiator, neighbor);
+
+    return bomb_cost + distance_cost + angle_cost;
 }
 
 // Simplified A* Implementation
@@ -15,7 +79,7 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
     float CELL_SIZE = gladiator->maze->getSquareSize();
 
     Position start = getSquareCoor(current_square, CELL_SIZE);
-    Position target = getSquareCoor(target_square, CELL_SIZE); 
+    Position target = getSquareCoor(target_square, CELL_SIZE);
 
     // Convert positions to grid coordinates
     byte start_i = static_cast<byte>(start.x / CELL_SIZE);
@@ -34,7 +98,6 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
     memset(parent_i, 0xFF, sizeof(parent_i)); // Initialize to invalid
     memset(parent_j, 0xFF, sizeof(parent_j));
 
-    
     Node openList[144];
     int openCount = 0;
 
@@ -88,13 +151,65 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
         for (int dir = 0; dir < 4; dir++)
         {
             MazeSquare *neighbor = neighbors[dir];
+            float wall_cost = 0;
+            // if (!neighbor)
+            // { // Check si y'a un pointeur nul alors il y a un mur
+            //     wall_cost = 30;
+            // }
+            // if (visited[neighbor->i][neighbor->j])
+            //     continue;
+
             if (!neighbor || visited[neighbor->i][neighbor->j])
+            {
                 continue;
+            }
+            // if (neighbor == nullptr)
+            // {
+            // }
+            // else if (visited[neighbor->i][neighbor->j])
+            // {
+            //     continue;
+            // }
+
+            if (neighbor == nullptr) // Test si il y a un mur ou la case a déjà été visité
+            {
+                int next_wall_size = int(gladiator->maze->getCurrentMazeSize() / 0.25);
+                int min_i = (12 - next_wall_size) / 2, max_i = 12 - min_i - 1, min_y = (12 - next_wall_size) / 2, max_y = 12 - min_y - 1;
+                wall_cost = 30;
+                if (dir == 0)
+                {
+                    if (square->i == min_i)
+                        continue; // Test s'il n'est pas sur la borne du labyrinthe en cours
+                    else
+                        neighbor = gladiator->maze->getSquare(square->i - 1, square->j);
+                }
+                else if (dir == 1)
+                {
+                    if (square->i == max_i)
+                        continue;
+                    else
+                        neighbor = gladiator->maze->getSquare(square->i + 1, square->j);
+                }
+                else if (dir == 2)
+                {
+                    if (square->j == max_y)
+                        continue;
+                    else
+                        neighbor = gladiator->maze->getSquare(square->i, square->j + 1);
+                }
+                else if (dir == 3)
+                {
+                    if (square->j == min_y)
+                        continue;
+                    else
+                        neighbor = gladiator->maze->getSquare(square->i, square->j - 1);
+                }
+            }
 
             // Calculate movement cost + heuristic
             float move_cost = current.total_cost + CELL_SIZE;
             // float complete_heurisic(Position(neighbor->i, neighbor->j), target);
-            float total_cost = complete_heurisic(gladiator, neighbor) + move_cost;
+            float total_cost = complete_heurisic(gladiator, neighbor) + move_cost + wall_cost;
 
             // Update existing node or add new
             bool exists = false;
@@ -112,7 +227,6 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
                     break;
                 }
             }
-
             if (!exists)
             {
                 openList[openCount++] = {
