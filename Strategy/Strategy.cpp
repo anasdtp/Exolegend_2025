@@ -7,7 +7,7 @@ StateMachine::StateMachine(GameState *game)
 {
     this->game = game;
 
-    currentState = State::WAIT;
+    currentState = State::EXPLORE;
     etat_exploration = 0;
     square = nullptr;
     data = game->gladiator->robot->getData();
@@ -15,6 +15,7 @@ StateMachine::StateMachine(GameState *game)
     current_square = nullptr;
     nearest_bomb = nullptr;
     nextPos = nullptr;
+    bomb_square = nullptr;
     neighbors_strat[4] = square;
     neighbors_strat[0] = nullptr;
     neighbors_strat[1] = nullptr;
@@ -68,16 +69,11 @@ bool StateMachine::CloseMaxWall()
     return near;
 }
 
-bool StateMachine::TimeToExplode()
-{
-    return (0);
-}
-
 MazeSquare *StateMachine::getBestBomb()
 {
     float max_score = -1000;
-    MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
-    MazeSquare *nearest_bomb = getMazeSquareCoor(Position{6, 6, 0}, game->gladiator);
+    this->current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
+    this->nearest_bomb = getMazeSquareCoor(Position{6, 6, 0}, game->gladiator);
 
     int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / 0.25);
     int min_index = 0, max_index = 11;
@@ -97,21 +93,19 @@ MazeSquare *StateMachine::getBestBomb()
         // {
         //     for (uint8_t j = min_index + 1; j < max_index; j++)
         {
-            MazeSquare *square = game->gladiator->maze->getSquare(i, j);
-            if (square->coin.value) // La case contient une bombe (ou coin, selon ta logique)
+            bomb_square = game->gladiator->maze->getSquare(i, j);
+            if (bomb_square->coin.value) // La case contient une bombe (ou coin, selon ta logique)
             {
                 // Obtenir la case du centre du terrain
-                MazeSquare *centerSquare = game->gladiator->maze->getSquare(6, 6);
                 // Calcul du score de la case en fonction de la distance, de la présence d'une bombe, et de la présence d'une obstacle
                 // La présence d'une obstacle augmente le score, la présence d'une bombe diminue le score, et la distance diminue le score
                 // La présence d'une bombe en cours diminue le score, et la présence d'une bombe non en cours augmente le score
                 // La présence d'une bombe non en cours diminue le score, et la présence d'une bombe en cours augmente le score
-
-                float score = -getDistance(current_square, square) + square->coin.value * 0.5f - square->danger * 1.0 - (square->possession == game->gladiator->robot->getData().teamId) * 1.0 + getDistance(square, centerSquare) * 0.5;
+                float score = -getDistance(current_square, bomb_square) + bomb_square->coin.value * 0.5f - bomb_square->danger * 1.0 - (bomb_square->possession == game->gladiator->robot->getData().teamId) * 1.0 + getDistance(bomb_square, game->gladiator->maze->getSquare(6, 6)) * 0.5;
                 if (score > max_score)
                 {
                     max_score = score;
-                    nearest_bomb = square;
+                    nearest_bomb = bomb_square;
                 }
             }
         }
@@ -123,7 +117,7 @@ MazeSquare *StateMachine::getBestBomb()
 MazeSquare *StateMachine::getSafeSquare()
 {
     // 1ère méthode : faire une recherche en cerclen autour du robot, en ne regardant que les cases valables
-    MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
+    current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
     // int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / 0.25);
     // int min_index = (12 - next_maze_size) / 2, max_index = 12 - min_index - 1;
 
@@ -242,7 +236,12 @@ void StateMachine::strategy()
                 game->gotoSquare(nextPos);
             }
         }
-        currentState = State::WAIT;
+        else
+        {
+            nextPos = getMazeSquareCoor({6, 6, 0}, game->gladiator);
+            game->gotoSquare(nextPos);
+        }
+        // currentState = State::WAIT;
     }
     break;
     }

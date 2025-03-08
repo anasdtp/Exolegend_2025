@@ -24,6 +24,7 @@ public:
     MazeSquare *nearest_bomb;
     MazeSquare *nextPos;
     MazeSquare *neighbors_strat[5];
+    MazeSquare *bomb_square;
 
     int etat_exploration;
 
