@@ -141,10 +141,9 @@ MazeSquare *StateMachine::getSafeSquare()
     {
         sg_y = -1;
     }
-
-    MazeSquare *target_square = new MazeSquare{uint8_t(int(current_square->i) + sg_x), uint8_t(int(current_square->j) + sg_y)};
-    game->gladiator->log("found square with backup");
-    return target_square;
+    current_square->i = uint8_t(int(current_square->i) + sg_x);
+    current_square->j = uint8_t(int(current_square->j) + sg_y);
+    return current_square;
 }
 
 void StateMachine::strategy()
@@ -186,36 +185,21 @@ void StateMachine::strategy()
     {
     case State::WAIT:
     {
-        if (number_of_bombs && sum > 3 && !square->isBomb)
+        if (number_of_bombs && (sum > 3) && !(square->isBomb))
         {
+
             game->gladiator->weapon->dropBombs(number_of_bombs);
             sum = 0;
+            square->isBomb = true;
         }
 
         if (f_close_max_wall)
         {
             currentState = State::SURVIVAL;
         }
-        else if (game->motors->available())
+        else
         {
-            // if (f_close_enemy)
-            // {
-            //     currentState = State::CLOSE_ENEMY;
-            // }
-
-            // else if (f_time_to_explode)
-            // {
-            //     currentState = State::EXPLOSION;
-            // }
-            // else
-            if (bomb)
-            {
-                currentState = State::EXPLORE_BOMB;
-            }
-            else
-            {
-                currentState = State::EXPLORE;
-            }
+            currentState = State::EXPLORE;
         }
     }
     break;
@@ -224,15 +208,6 @@ void StateMachine::strategy()
     {
         MazeSquare *target_square = getSafeSquare();
         game->gotoSquare(target_square);
-        currentState = State::WAIT;
-    }
-    break;
-
-    case State::EXPLORE_BOMB:
-    {
-        // On cherche où sont les bombes les plus proches et on s'y dirige et on les ramasse puis explose
-        MazeSquare *nearest_bomb = getBestBomb();
-        game->gotoSquare(nearest_bomb);
         currentState = State::WAIT;
     }
     break;
