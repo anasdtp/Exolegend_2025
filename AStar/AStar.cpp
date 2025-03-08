@@ -88,8 +88,14 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
         for (int dir = 0; dir < 4; dir++)
         {
             MazeSquare *neighbor = neighbors[dir];
-            if (!neighbor || visited[neighbor->i][neighbor->j])
+            if (!neighbor)
+            {
+                neighbor = gladiator->maze->getSquare(current.i, current.j + 1);
+            }
+            else if(visited[neighbor->i][neighbor->j])
+            {
                 continue;
+            }
 
             // Calculate movement cost + heuristic
             float move_cost = current.total_cost + CELL_SIZE;

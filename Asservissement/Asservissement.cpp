@@ -42,7 +42,7 @@ Asservissement::Asservissement(Gladiator *gladiator)
 {
     this->gladiator = gladiator;
 
-    v_max = 1.f; acc_max = 0.5f;
+    v_max = 1.f; acc_max = 0.8f;
     
     ta = v_max / acc_max;
     d_max = v_max * v_max / acc_max;
