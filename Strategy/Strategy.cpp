@@ -66,25 +66,25 @@ MazeSquare *StateMachine::getBestBomb()
 {
     float max_score = -1000;
     MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
-    MazeSquare *nearest_bomb = nullptr;
+    MazeSquare *nearest_bomb = getMazeSquareCoor(Position{6, 6, 0}, game->gladiator);
 
     int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / 0.25);
     int min_index = 0, max_index = 11;
     if (game->current_time % 20000 == 13000) // S'il reste 7 secondes avant la fin on ne cherche pas une case sur les bouts du cadre
     {
-        min_index = (12 - next_maze_size) / 2 , max_index = 11 - min_index;
+        min_index = (12 - next_maze_size) / 2, max_index = 11 - min_index;
     }
     else // S'il reste 7 secondes avant la fin on ne cherche pas une case sur les bouts du cadre
     {
-        min_index = (12 - next_maze_size) / 2 + 1, max_index = 11 - min_index +1;
+        min_index = (12 - next_maze_size) / 2 + 1, max_index = 11 - min_index + 1;
     }
 
-    for (uint8_t i = min_index ; i < max_index-1; i++)
+    for (uint8_t i = min_index; i < max_index - 1; i++)
     {
-        for (uint8_t j = min_index ; j < max_index-1; j++)
-    // for (uint8_t i = min_index + 1; i < max_index; i++)
-    // {
-    //     for (uint8_t j = min_index + 1; j < max_index; j++)
+        for (uint8_t j = min_index; j < max_index - 1; j++)
+        // for (uint8_t i = min_index + 1; i < max_index; i++)
+        // {
+        //     for (uint8_t j = min_index + 1; j < max_index; j++)
         {
             MazeSquare *square = game->gladiator->maze->getSquare(i, j);
             if (square->coin.value) // La case contient une bombe (ou coin, selon ta logique)
@@ -107,6 +107,44 @@ MazeSquare *StateMachine::getBestBomb()
     }
 
     return nearest_bomb;
+}
+
+MazeSquare *StateMachine::getSafeSquare()
+{
+    // 1ère méthode : faire une recherche en cerclen autour du robot, en ne regardant que les cases valables
+    MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
+    // int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / 0.25);
+    // int min_index = (12 - next_maze_size) / 2, max_index = 12 - min_index - 1;
+
+    // for (int i = 1; i < 5; i++) {
+    //     int steps = 16; // Adjust based on precision needed
+    //     for (int k = 0; k < steps; k++) {
+    //         float theta = k * (2 * PI / steps);
+    //         int dx = int(cos(theta) * i);
+    //         int dy = int(sin(theta) * i);
+    //         MazeSquare *new_square = game->gladiator->maze->getSquare(current_square->i + dx, current_square->j + dy);
+    //         if (new_square!= nullptr && new_square->danger==0 && new_square->i >= min_index && new_square->j >= min_index && new_square->i <= max_index && new_square->j <= max_index) {
+    //             game->gladiator->log("found square with radius");
+    //             return new_square;
+    //         }
+    //     }
+    // }
+
+    // Backup quand même ; il s'agit du code utilisé précédemment pour rentrer dans les limites du terrain
+    int sg_x = 1;
+    int sg_y = 1;
+    if (current_square->i > 6)
+    {
+        sg_x = -1;
+    }
+    if (current_square->j > 6)
+    {
+        sg_y = -1;
+    }
+
+    MazeSquare *target_square = new MazeSquare{uint8_t(int(current_square->i) + sg_x), uint8_t(int(current_square->j) + sg_y)};
+    game->gladiator->log("found square with backup");
+    return target_square;
 }
 
 void StateMachine::strategy()
@@ -204,6 +242,7 @@ void StateMachine::strategy()
         // On cherche où sont les bombes les plus proches et on s'y dirige et on les ramasse puis explose
         MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator); // me donne les distances en mètres
         MazeSquare *nearest_bomb = getBestBomb();
+        game->gladiator->log("Nearest bomb %d", nearest_bomb->i);
 
         SimplePath path = simpleAStar(game->gladiator, current_square, nearest_bomb);
         if (path.length > 0)
@@ -224,36 +263,4 @@ void StateMachine::strategy()
     }
     break;
     }
-}
-
-
-MazeSquare *StateMachine::getSafeSquare() {
-    // 1ère méthode : faire une recherche en cerclen autour du robot, en ne regardant que les cases valables
-    MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
-    // int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / 0.25);
-    // int min_index = (12 - next_maze_size) / 2, max_index = 12 - min_index - 1;
-    
-    // for (int i = 1; i < 5; i++) {
-    //     int steps = 16; // Adjust based on precision needed
-    //     for (int k = 0; k < steps; k++) {
-    //         float theta = k * (2 * PI / steps);
-    //         int dx = int(cos(theta) * i);
-    //         int dy = int(sin(theta) * i);
-    //         MazeSquare *new_square = game->gladiator->maze->getSquare(current_square->i + dx, current_square->j + dy);
-    //         if (new_square!= nullptr && new_square->danger==0 && new_square->i >= min_index && new_square->j >= min_index && new_square->i <= max_index && new_square->j <= max_index) {
-    //             game->gladiator->log("found square with radius");
-    //             return new_square;
-    //         }
-    //     }
-    // }
-    
-    // Backup quand même ; il s'agit du code utilisé précédemment pour rentrer dans les limites du terrain
-    int sg_x = 1;
-    int sg_y = 1;
-    if (current_square->i > 6) { sg_x = -1;}
-    if (current_square->j > 6) { sg_y = -1;}
-
-    MazeSquare *target_square = new MazeSquare{ uint8_t(int(current_square->i) + sg_x), uint8_t(int(current_square->j) + sg_y)};
-    game->gladiator->log("found square with backup");
-    return target_square;
 }
