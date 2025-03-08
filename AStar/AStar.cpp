@@ -8,14 +8,14 @@ float complete_heurisic(Gladiator *gladiator, MazeSquare *neighbor) // Possessio
 }
 
 // Simplified A* Implementation
-SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSquare *targer_square)
+SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSquare *target_square)
 {
     SimplePath path;
     path.length = 0;
     float CELL_SIZE = gladiator->maze->getSquareSize();
 
     Position start = getSquareCoor(current_square, CELL_SIZE);
-    Position target = getSquareCoor(targer_square, CELL_SIZE); 
+    Position target = getSquareCoor(target_square, CELL_SIZE); 
 
     // Convert positions to grid coordinates
     byte start_i = static_cast<byte>(start.x / CELL_SIZE);
