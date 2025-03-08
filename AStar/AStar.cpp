@@ -62,6 +62,68 @@ float heuristic_rotation(Gladiator *gladiator, MazeSquare *neighbor)
     return angle_cost;
 }
 
+float heuristic_rotation(Gladiator *gladiator, MazeSquare *neighbor)
+{
+    Position current_pos = gladiator->robot->getData().position;
+    MazeSquare *robot_square = getMazeSquareCoor(current_pos, gladiator);
+
+    float angle_to_turn;
+    uint8_t i_n = neighbor->i;
+    uint8_t j_n = neighbor->j;
+    uint8_t i_r = robot_square->i;
+    uint8_t j_r = robot_square->j;
+    float round_current_orientation;
+    if (current_pos.a < PI / 4 && current_pos.a > -PI / 4)
+    {
+        round_current_orientation = 0;
+    }
+    else if (current_pos.a < 3 * PI / 4 && current_pos.a > PI / 4)
+    {
+        round_current_orientation = PI / 2;
+    }
+    else if (current_pos.a < -3 * PI / 4 && current_pos.a > 3 * PI / 4)
+    {
+        round_current_orientation = -PI;
+    }
+    else if (current_pos.a < -PI / 4 && current_pos.a > -3 * PI / 4)
+    {
+        round_current_orientation = -PI / 2;
+    }
+
+    if (i_n == i_r)
+    {
+        if (j_n - j_r == 1)
+        {
+            angle_to_turn = -(round_current_orientation - 0);
+        }
+        else if (j_n - j_r == -1)
+        {
+            angle_to_turn = -(round_current_orientation - PI);
+        }
+    }
+    else if (j_n == j_r)
+    {
+        if (i_n - i_r == 1)
+        {
+            angle_to_turn = -(round_current_orientation - (-PI / 2));
+        }
+        else if (i_n - i_r == -1)
+        {
+            angle_to_turn = -(round_current_orientation - (PI / 2));
+        }
+    }
+    float angle_cost{0};
+    if (angle_to_turn == PI / 2 || angle_to_turn == -PI / 2)
+    {
+        angle_cost = 6;
+    }
+    else if (angle_to_turn == PI)
+    {
+        angle_cost = 12;
+    }
+    return angle_cost;
+}
+
 float complete_heurisic(Gladiator *gladiator, MazeSquare *neighbor) // Possession ennemi, donc id de la team, position bombe et explosion
 {
     float bomb_cost = 2 * float(neighbor->danger);
@@ -106,7 +168,7 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
 
     while (openCount > 0)
     {
-        // Find node with lowest total cost
+        // Trouver le nœud avec le coût total le plus bas
         int bestIndex = 0;
         for (int i = 1; i < openCount; i++)
         {
@@ -115,22 +177,20 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
         }
         Node current = openList[bestIndex];
 
-        // Path found - reconstruct
+        // Chemin trouvé - reconstruction
         if (current.i == target_i && current.j == target_j)
         {
             byte i = current.i, j = current.j;
             while (i != 0xFF)
-            { // Follow parent pointers
-                Position pos;
-                pos.x = (i + 0.5f) * CELL_SIZE; // Center of cell
-                pos.y = (j + 0.5f) * CELL_SIZE;
-                path.steps[path.length++] = pos;
-                byte pi = parent_i[i][j];
-                byte pj = parent_j[i][j];
+            { // Suivre les parents
+                path.steps[path.length++] = {
+                    (i + 0.5f) * CELL_SIZE,
+                    (j + 0.5f) * CELL_SIZE};
+                byte pi = parent_i[i][j], pj = parent_j[i][j];
                 i = pi;
                 j = pj;
             }
-            // Reverse to get start->target order
+            // Inversion pour obtenir l'ordre start → target
             for (int k = 0; k < path.length / 2; k++)
             {
                 Position temp = path.steps[k];
@@ -142,26 +202,20 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
 
         visited[current.i][current.j] = true;
 
-        // Explore neighbors
-        MazeSquare *square = gladiator->maze->getSquare(current.i, current.j);
-        MazeSquare *neighbors[4] = {
-            square->northSquare, square->southSquare,
-            square->eastSquare, square->westSquare};
+        // Exploration des voisins directement sans tableau temporaire
+        static const int dx[4] = {0, 0, 1, -1};
+        static const int dy[4] = {1, -1, 0, 0};
 
         for (int dir = 0; dir < 4; dir++)
         {
-            MazeSquare *neighbor = neighbors[dir];
-            if (!neighbor || visited[neighbor->i][neighbor->j])
-            {
-                continue;
-            }
+            MazeSquare *neighbor = gladiator->maze->getSquare(current.i + dx[dir], current.j + dy[dir]);
 
-            // Calculate movement cost + heuristic
+            if (!neighbor || visited[neighbor->i][neighbor->j])
+                continue;
+
             float move_cost = current.total_cost + CELL_SIZE;
-            // float complete_heurisic(Position(neighbor->i, neighbor->j), target);
             float total_cost = complete_heurisic(gladiator, neighbor) + move_cost;
 
-            // Update existing node or add new
             bool exists = false;
             for (int i = 0; i < openCount; i++)
             {
@@ -180,15 +234,13 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
 
             if (!exists)
             {
-                openList[openCount++] = {
-                    neighbor->i,
-                    neighbor->j,
-                    total_cost};
+                openList[openCount++] = {neighbor->i, neighbor->j, total_cost};
                 parent_i[neighbor->i][neighbor->j] = current.i;
                 parent_j[neighbor->i][neighbor->j] = current.j;
             }
         }
-        // Remove processed node
+
+        // Supprimer le nœud traité
         openList[bestIndex] = openList[--openCount];
     }
 
