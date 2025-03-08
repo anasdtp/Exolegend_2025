@@ -12,12 +12,17 @@ Asservissement *motors;
 bool match_started = false;
 
 MazeSquare *square[2]; 
+MazeSquare *square2[2]; 
 
 void testAllerRetour(){
-    static int count_square = 0;
+    static int count_square = 0, count = 0;
     if(motors->available()){
+        gladiator->log("Go Back to black");
         game->gotoSquare(square[count_square]);
         count_square = (count_square + 1) % 2;
+        if(!count_square){
+
+        }
     }
 }
 
@@ -47,7 +52,9 @@ void reset()
     match_started = false;
 
     square[1] = game->getCurrentSquare();
-    square[0] = gladiator->maze->getSquare(square[1]->i+1, square[1]->j);
+    square2[1] = game->getCurrentSquare();
+    square[0] = gladiator->maze->getSquare(square[1]->i+1, square[1]->j+1);
+    square2[0] = gladiator->maze->getSquare(square[1]->i+1, square[1]->j);
 }
 
 void loop()
@@ -64,11 +71,11 @@ void loop()
         // gladiator->log("targetpos : %f", motors->getTargetPos().x);
         game->Update();
         // gladiator->log("targetpos : %f", motors->getTargetPos().x);
-        statemachine->strategy();
+        // statemachine->strategy();
 
         // gladiator->log("targetpos : %f", motors->getTargetPos().y);
 
-        // testAllerRetour();
+        testAllerRetour();
         
 
         if (TempsEchantionnage(TE_MS))

@@ -188,7 +188,8 @@ void StateMachine::strategy()
     {
         if (number_of_bombs && sum > 3 && !square->isBomb)
         {
-            game->gladiator->weapon->dropBombs(number_of_bombs);
+            // game->gladiator->weapon->dropBombs(number_of_bombs);
+            Serial.println("Dropping bombs");
             sum = 0;
         }
 
