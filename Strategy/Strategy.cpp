@@ -1,7 +1,7 @@
 #include "Strategy.h"
 #include "Asservissement/Asservissement.h"
 #include "Mathematiques/Mathematiques.h"
-#include "a_star.h"
+#include "AStar/AStar.h"
 
 StateMachine::StateMachine(GameState *game)
 {
@@ -175,10 +175,10 @@ void StateMachine::strategy()
     case State::EXPLORE:
     {
         // On cherche où sont les bombes les plus proches et on s'y dirige et on les ramasse puis explose
-        Position currentPos = game->gladiator->robot->getData().position; // me donne les distances en mètres
+        MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator); // me donne les distances en mètres
         MazeSquare *nearest_bomb = getNearestBomb();
-        Position nearest_bomb_pos = getSquareCoor(nearest_bomb, game->squareSize);
-        SimplePath path = simpleAStar(game->gladiator, currentPos, nearest_bomb_pos);
+
+        SimplePath path = simpleAStar(game->gladiator, current_square, nearest_bomb);
         if (path.length > 0)
         {
             if (path.length > 1)

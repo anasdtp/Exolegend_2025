@@ -1,93 +1,130 @@
 #include "AStar.h"
 
-AStar::AStar(/* args */)
+float complete_heurisic(Gladiator *gladiator, MazeSquare *neighbor) // Possession ennemi, donc id de la team, position bombe et explosion
 {
+    float bomb_cost = float(neighbor->danger);
+    float distance_cost = 1;
+    return bomb_cost + distance_cost;
 }
 
-// Ajoute un élément dans l'openSet (file de priorité simplifiée)
-void AStar::addToOpenSet(MazeSquare *square) {
-    openSet[openSetSize++] = square;
-}
+// Simplified A* Implementation
+SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSquare *targer_square)
+{
+    SimplePath path;
+    path.length = 0;
+    float CELL_SIZE = gladiator->maze->getSquareSize();
 
-// Retire le meilleur élément (plus petit fCost)
-MazeSquare *AStar::popBestFromOpenSet() {
-    int bestIndex = 0;
-    for (int i = 1; i < openSetSize; i++) {
-        if (fCost[openSet[i]->i][openSet[i]->j] < fCost[openSet[bestIndex]->i][openSet[bestIndex]->j]) {
-            bestIndex = i;
+    Position start = getSquareCoor(current_square, CELL_SIZE);
+    Position target = getSquareCoor(targer_square, CELL_SIZE); 
+
+    // Convert positions to grid coordinates
+    byte start_i = static_cast<byte>(start.x / CELL_SIZE);
+    byte start_j = static_cast<byte>(start.y / CELL_SIZE);
+    byte target_i = static_cast<byte>(target.x / CELL_SIZE);
+    byte target_j = static_cast<byte>(target.y / CELL_SIZE);
+
+    // Early exit for invalid positions
+    if (start_i >= 12 || start_j >= 12 || target_i >= 12 || target_j >= 12)
+        return path;
+
+    // Algorithm data structures
+    bool visited[12][12] = {false};
+    byte parent_i[12][12];
+    byte parent_j[12][12];
+    memset(parent_i, 0xFF, sizeof(parent_i)); // Initialize to invalid
+    memset(parent_j, 0xFF, sizeof(parent_j));
+
+    
+    Node openList[144];
+    int openCount = 0;
+
+    // Start with initial position
+    openList[openCount++] = {start_i, start_j, 0};
+
+    while (openCount > 0)
+    {
+        // Find node with lowest total cost
+        int bestIndex = 0;
+        for (int i = 1; i < openCount; i++)
+        {
+            if (openList[i].total_cost < openList[bestIndex].total_cost)
+                bestIndex = i;
         }
-    }
-    
-    MazeSquare *bestSquare = openSet[bestIndex];
+        Node current = openList[bestIndex];
 
-    // Supprimer l'élément
-    openSetSize--;
-    for (int i = bestIndex; i < openSetSize; i++) {
-        openSet[i] = openSet[i+1];
-    }
-    
-    return bestSquare;
-}
-
-// Vérifie si une case est dans l'openSet
-bool AStar::isInOpenSet(MazeSquare *square) {
-    for (int i = 0; i < openSetSize; i++) {
-        if (openSet[i] == square)
-            return true;
-    }
-    return false;
-}
-
-// Trouve un chemin entre start et goal
-void AStar::aStar(MazeSquare *start, MazeSquare *goal) {
-    // Initialisation des coûts
-    for (int i = 0; i < SIZE; i++)
-        for (int j = 0; j < SIZE; j++)
-            gCost[i][j] = fCost[i][j] = INF;
-    
-    gCost[start->i][start->j] = 0;
-    fCost[start->i][start->j] = heuristic(start, goal);
-    openSetSize = 0;
-    addToOpenSet(start);
-
-    while (openSetSize > 0) {
-        MazeSquare *current = popBestFromOpenSet();
-
-        // Si on atteint la destination, on sort
-        if (current == goal) {
-            printf("Chemin trouvé !\n");
-            return;
+        // Path found - reconstruct
+        if (current.i == target_i && current.j == target_j)
+        {
+            byte i = current.i, j = current.j;
+            while (i != 0xFF)
+            { // Follow parent pointers
+                Position pos;
+                pos.x = (i + 0.5f) * CELL_SIZE; // Center of cell
+                pos.y = (j + 0.5f) * CELL_SIZE;
+                path.steps[path.length++] = pos;
+                byte pi = parent_i[i][j];
+                byte pj = parent_j[i][j];
+                i = pi;
+                j = pj;
+            }
+            // Reverse to get start->target order
+            for (int k = 0; k < path.length / 2; k++)
+            {
+                Position temp = path.steps[k];
+                path.steps[k] = path.steps[path.length - 1 - k];
+                path.steps[path.length - 1 - k] = temp;
+            }
+            return path;
         }
 
-        // Explorer les voisins valides
-        MazeSquare *neighbors[4] = {current->northSquare, current->southSquare, current->westSquare, current->eastSquare};
+        visited[current.i][current.j] = true;
 
-        for (int d = 0; d < 4; d++) {
-            MazeSquare *neighbor = neighbors[d];
-            if (neighbor == NULL) continue;  // Mur ou hors limites
-            
-            uint8_t tentativeGCost = gCost[current->i][current->j] + 1;
-            if (tentativeGCost < gCost[neighbor->i][neighbor->j]) {
-                gCost[neighbor->i][neighbor->j] = tentativeGCost;
-                fCost[neighbor->i][neighbor->j] = tentativeGCost + heuristic(neighbor, goal);
-                parents[neighbor->i][neighbor->j] = current;
-                
-                if (!isInOpenSet(neighbor)) {
-                    addToOpenSet(neighbor);
+        // Explore neighbors
+        MazeSquare *square = gladiator->maze->getSquare(current.i, current.j);
+        MazeSquare *neighbors[4] = {
+            square->northSquare, square->southSquare,
+            square->eastSquare, square->westSquare};
+
+        for (int dir = 0; dir < 4; dir++)
+        {
+            MazeSquare *neighbor = neighbors[dir];
+            if (!neighbor || visited[neighbor->i][neighbor->j])
+                continue;
+
+            // Calculate movement cost + heuristic
+            float move_cost = current.total_cost + CELL_SIZE;
+            // float complete_heurisic(Position(neighbor->i, neighbor->j), target);
+            float total_cost = complete_heurisic(gladiator, neighbor) + move_cost;
+
+            // Update existing node or add new
+            bool exists = false;
+            for (int i = 0; i < openCount; i++)
+            {
+                if (openList[i].i == neighbor->i && openList[i].j == neighbor->j)
+                {
+                    exists = true;
+                    if (total_cost < openList[i].total_cost)
+                    {
+                        openList[i].total_cost = total_cost;
+                        parent_i[neighbor->i][neighbor->j] = current.i;
+                        parent_j[neighbor->i][neighbor->j] = current.j;
+                    }
+                    break;
                 }
             }
-        }
-    }
-    
-    printf("Aucun chemin trouvé.\n");
-}
 
-// Fonction pour afficher le chemin trouvé
-void AStar::printPath(MazeSquare *start, MazeSquare *goal) {
-    MazeSquare *current = goal;
-    while (current != start) {
-        printf("(%d, %d) <- ", current->i, current->j);
-        current = parents[current->i][current->j];
+            if (!exists)
+            {
+                openList[openCount++] = {
+                    neighbor->i,
+                    neighbor->j,
+                    total_cost};
+                parent_i[neighbor->i][neighbor->j] = current.i;
+                parent_j[neighbor->i][neighbor->j] = current.j;
+            }
+        }
+        // Remove processed node
+        openList[bestIndex] = openList[--openCount];
     }
-    printf("(%d, %d)\n", start->i, start->j);
+    return path; // Empty if no path found
 }

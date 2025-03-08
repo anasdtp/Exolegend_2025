@@ -2,39 +2,24 @@
 #define ASTAR_H
 #include "gladiator.h"
 #include "Mathematiques/Mathematiques.h"
-#include "GameData/GameData.h"
+#include <cmath>
+#include <cstring> // For memset
 
-#define INF 255
-
-class AStar
+struct SimplePath
 {
-private:
-    // Structures pour A*
-    uint8_t gCost[SIZE][SIZE];       // Coût du chemin depuis le départ
-    uint8_t fCost[SIZE][SIZE];       // f(n) = g(n) + h(n)
-    MazeSquare *parents[SIZE][SIZE]; // Parent pour reconstruire le chemin
-
-    MazeSquare *openSet[SIZE * SIZE]; // Liste des cases à explorer
-    int openSetSize = 0;
-
-    // Ajoute un élément dans l'openSet (file de priorité simplifiée)
-    void addToOpenSet(MazeSquare *square);
-
-    MazeSquare *popBestFromOpenSet();
-
-    bool isInOpenSet(MazeSquare *square);
-
-    // Fonction pour afficher le chemin trouvé
-    void printPath(MazeSquare *start, MazeSquare *goal);
-
-public:
-    AStar(/* args */);
-
-    void aStar(MazeSquare *start, MazeSquare *goal);
-
+    Position steps[144]; // Max path length for 12x12 maze
+    int length = 0;
 };
 
+// Open list (stores nodes to explore)
+struct Node
+{
+    byte i, j;
+    float total_cost;
+};
+float complete_heurisic(Position start, Position target);
 
+SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSquare *targer_square);
 
 
 
