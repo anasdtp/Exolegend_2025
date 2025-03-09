@@ -152,6 +152,7 @@ void Asservissement::positionControl(Position targetPos)
             {
                 sens = 1; // Avancer normalement
             }
+            sens = forcer_sens ? forcer_sens : sens;
 
             // // Vérifier si une rotation est nécessaire avant le déplacement
             // if (abs(angleDifference) > toleranceAngle)
@@ -299,8 +300,9 @@ void Asservissement::positionControl(Position targetPos)
     gladiator->control->setWheelSpeed(WheelAxis::RIGHT, consvr, false);
 }
 
-void Asservissement::setTargetPos(Position targetPos)
+void Asservissement::setTargetPos(Position targetPos, int sens)
 {
     this->targetPos = targetPos;
     flag_available = false;
+    forcer_sens = sens;
 }

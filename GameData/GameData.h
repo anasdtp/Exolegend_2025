@@ -31,7 +31,15 @@ public:
     void Update();
     void reset();
 
-    void gotoSquare(MazeSquare *square);
+    /*
+    * @brief Fonction pour se déplacer vers une case du labyrinthe
+    * @param square : la case du labyrinthe vers laquelle on veut se déplacer
+    * @param sens : le sens de déplacement 
+    *               (0 pour laisser le robot choisir le sens optimale, 
+    *                1 pour forcer le déplacement en avant, 
+    *               -1 pour forcer le déplacement en arrière)
+    */
+    void gotoSquare(MazeSquare *square, int sens = 0);
 
     Position getCurrentPosition();
 

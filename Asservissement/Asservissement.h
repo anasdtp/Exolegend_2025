@@ -56,6 +56,7 @@ private:
     float dt;
 
     float sens;
+    float forcer_sens;
     float target_angle; //Pour l'etat ROTATION
 
     int etat_automate_depl = INITIALISATION;
@@ -78,7 +79,15 @@ public:
 
     void positionControl(Position targetPos);
 
-    void setTargetPos(Position targetPos);
+    /*
+    * @brief Fonction pour déplacer le robot vers une position donnée
+    * @param targetPos : la position vers laquelle on veut déplacer le robot en mètres
+    * @param sens : le sens de déplacement
+    *             (0 pour laisser le robot choisir le sens optimal,
+    *             1 pour forcer le déplacement en avant,
+    *            -1 pour forcer le déplacement en arrière)
+    */
+    void setTargetPos(Position targetPos, int sens = 0);
 
     Position getTargetPos()
     {

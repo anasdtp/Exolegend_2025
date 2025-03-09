@@ -325,19 +325,17 @@ void StateMachine::strategy()
             {
                 // Move robot through path.steps[0] to path.steps[path.length-1] // Remlacer par path.length-1 pour aller direct sur les bombes (pas besoin du else dans ce cas)
                 nextPos = getMazeSquareCoor(path.steps[1], game->gladiator);
-                game->gotoSquare(nextPos);
             }
             else
             {
                 nextPos = getMazeSquareCoor(path.steps[0], game->gladiator);
-                game->gotoSquare(nextPos);
             }
         }
         else
         {
             nextPos = getMazeSquareCoor({6, 6, 0}, game->gladiator);
-            game->gotoSquare(nextPos);
         }
+        game->gotoSquare(nextPos, 1);
         currentState = State::WAIT;
     }
     break;

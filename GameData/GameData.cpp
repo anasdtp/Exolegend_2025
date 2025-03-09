@@ -56,11 +56,11 @@ void GameState::reset()
     }
 }
 
-void GameState::gotoSquare(MazeSquare *square)
+void GameState::gotoSquare(MazeSquare *square, int sens)
 {
     goal = getSquareCoor(square, squareSize);
 
-    motors->setTargetPos(goal);
+    motors->setTargetPos(goal, sens);
 }
 
 MazeSquare *GameState::getCurrentSquare(){
