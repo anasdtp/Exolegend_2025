@@ -79,11 +79,23 @@ float complete_heurisic(Gladiator *gladiator, byte ni, byte nj)
     {
         cost_outside_square = 10000.0f;
     }
-
+    float cost_lives = 0.f;
+    RobotList ids_list = gladiator->game->getPlayingRobotsId();
+    for (int i = 0; i < 4; i++)
+    {
+        if (ids_list.ids[i] != gladiator->robot->getData().id)
+        {
+            RobotData robot_data = gladiator->game->getOtherRobotData(ids_list.ids[i]);
+            if (!(robot_data.lifes))
+            {
+                cost_lives = 500.f;
+            }
+        }
+    }
     square_heuresique = gladiator->maze->getSquare(ni, nj);
     float bomb_cost = (square_heuresique != nullptr) ? 2 * square_heuresique->danger : 0;
     float angle_cost = heuristic_rotation(gladiator, ni, nj);
-    return bomb_cost + angle_cost + 1; // +1 for distance
+    return bomb_cost + angle_cost + 1.0f + cost_outside_square + cost_lives; // +1 for distance
 }
 
 // Simplified A* Implementation

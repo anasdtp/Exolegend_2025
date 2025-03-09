@@ -336,7 +336,7 @@ void StateMachine::strategy()
             nextPos = getMazeSquareCoor({6, 6, 0}, game->gladiator);
         }
         game->gotoSquare(nextPos, 1);
-        currentState = State::WAIT;
+        currentState = State::SURVIVAL;
     }
     break;
 
@@ -357,7 +357,7 @@ void StateMachine::strategy()
         }
         MazeSquare target_square = {uint8_t(int(current_square->i) + sg_x), uint8_t(int(current_square->j) + sg_y)};
         game->gotoSquare(&target_square);
-        currentState = State::WAIT;
+        currentState = State::SURVIVAL;
     }
     break;
     }
