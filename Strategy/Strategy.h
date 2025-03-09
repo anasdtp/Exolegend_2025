@@ -27,6 +27,7 @@ public:
     MazeSquare *nextPos;
     MazeSquare *neighbors_strat[5];
     MazeSquare *bomb_square;
+    int sum_threshold;
 
     int etat_exploration;
 
