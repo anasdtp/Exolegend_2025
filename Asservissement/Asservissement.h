@@ -56,9 +56,10 @@ private:
     float dt;
 
     float sens;
-    float target_angle; // Pour l'etat ROTATION
+    float target_angle; //Pour l'etat ROTATION
 
     int etat_automate_depl = INITIALISATION;
+    int next_state = INITIALISATION;//Pour que l'etat ROTATION sache où il doit aller après avoir fini de tourner
 
     bool flag_available;
 

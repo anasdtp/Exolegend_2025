@@ -31,9 +31,9 @@ Asservissement::Asservissement(Gladiator *gladiator)
     goTo.integral = 0;
     goTo.prev_error = 0;
 
-    rotation.Kp = 3.5f;
-    rotation.Ki = 0.001f;
-    rotation.Kd = 0.1f;
+    rotation.Kp = 2.f;
+    rotation.Ki = 0.0f;
+    rotation.Kd = 0.15f;
     rotation.integral = 0;
     rotation.prev_error = 0;
 
@@ -42,8 +42,8 @@ Asservissement::Asservissement(Gladiator *gladiator)
     consvl = 0;
     consvr = 0;
 
-    kw = 3.f * 0.9f;
-    kv = 0.75f * 0.9f;
+    kw = 3.f * 0.85f;
+    kv = 0.75f * 0.85f;
 
     etat_automate_depl = INITIALISATION;
     flag_available = true;
@@ -142,30 +142,24 @@ void Asservissement::positionControl(Position targetPos)
             ta = v_max / acc_max;
             d_max = v_max * v_max / acc_max;
             traj = fnVitesse2(currentPos, targetPos);
-            etat_automate_depl = GO_TO_POS;
-            if (abs(angleDifference) > (PI_F / 2.f))
+
+            if(angleDifference > (PI_F / 2.f - toleranceAngle)){
+                angleDifference = angleDifference - PI_F;
+                sens = -1;
+            }else{
+                sens = 1;
+            }
+
+            if (abs(angleDifference) > toleranceAngle)
             {
                 sens = -1;                                                      // Reculer si l'angle est trop grand
                 angleDifference = reductionAngle(PI_F / 2.f - angleDifference); // Ajustement d'angle pour la rotation en marche arrière
             }
             else
             {
-                sens = 1; // Avancer normalement
+                etat_automate_depl = GO_TO_POS;
+                Serial.println("case INITIALISATION -> GO_TO_POS");
             }
-
-            // // Vérifier si une rotation est nécessaire avant le déplacement
-            // if (abs(angleDifference) > toleranceAngle)
-            // {
-            //     // Calcul de l'angle cible
-            //     target_angle = angleDifference + currentPos.a;
-            //     etat_automate_depl = ROTATION;
-            //     Serial.println("case INITIALISATION -> ROTATION");
-            // }
-            // else
-            // {
-            //     etat_automate_depl = GO_TO_POS;
-            //     Serial.println("case INITIALISATION -> GO_TO_POS");
-            // }
 
             robot_radius = gladiator->robot->getRobotRadius();
             flag_available = false;
@@ -200,23 +194,27 @@ void Asservissement::positionControl(Position targetPos)
         float dy = targetPos.y - currentPos.y;
         float d = sqrt((dx * dx) + (dy * dy));
 
+        
+
         if (d > Threshold)
         {
             float rho = atan2(dy, dx);
-            float angleDifference = sens > 0 ? reductionAngle(rho - currentPos.a) : reductionAngle(PI_F + rho - currentPos.a);
+            float angleDifference = sens > 0? reductionAngle(rho - currentPos.a) : reductionAngle(PI_F + rho - currentPos.a);
             float consw = kw * angleDifference;
 
-            float consv = sens * kv * d * pow(abs(cos(abs(angleDifference))), 15);
+            float consv = sens * kv * d * pow(abs(cos(angleDifference)), 15);
+
+            gladiator->log("sens = %f, rho = %f, currentPos.a = %f, angleDifference = %f", sens, rho, currentPos.a, angleDifference);
             // consw = abs(consw) > wlimit ? (consw > 0 ? 1 : -1) * wlimit : consw;
             // consv = abs(consv) > vlimit ? (consv > 0 ? 1 : -1) * vlimit : consv;
 
             // Check if moving backward is more efficient
-
-            // if (abs(angleDifference) > PI / 2.)
-            // {
-            //     // gladiator->log("angleDifference : %f >PI/2, dt : %f", angleDifference, dt);
-            //     consv = -consv; // Move backward if turning more than 90 degrees
-            // }
+            
+            if (abs(angleDifference) > PI / 2.)
+            {
+                // gladiator->log("angleDifference : %f >PI/2, dt : %f", angleDifference, dt);
+                consv = -consv; // Move backward if turning more than 90 degrees
+            }
 
             consvl = consv - (robot_radius * consw); // GFA 3.6.2
             consvr = consv + (robot_radius * consw); // GFA 3.6.2
