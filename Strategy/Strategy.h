@@ -11,7 +11,6 @@ public:
     enum State
     {
         WAIT,
-        EXPLORE_BOMB,
         SURVIVAL,
         EXPLORE,
         ATTACK,
@@ -20,6 +19,14 @@ public:
 
     GameState *game;
     State currentState;
+    MazeSquare *square;
+    RobotData data;
+    MazeSquare *target_square;
+    MazeSquare *current_square;
+    MazeSquare *nearest_bomb;
+    MazeSquare *nextPos;
+    MazeSquare *neighbors_strat[5];
+    MazeSquare *bomb_square;
 
     int etat_exploration;
 

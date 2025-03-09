@@ -46,10 +46,10 @@ void GameState::reset()
     switch (myData.id)
     {
     case 128:
-        gladiator->robot->setCalibrationOffset(+0.0054f, -0.0080f, 0.f);
+        gladiator->robot->setCalibrationOffset(0.0054f, 0.0080f, 0.f);
         break;
     case 131:
-        gladiator->robot->setCalibrationOffset(-0.0009, -0.0004, 0.f);
+        gladiator->robot->setCalibrationOffset(0.0009, 0.0004, 0.f);
         break;
     default:
         break;

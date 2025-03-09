@@ -1,28 +1,5 @@
 #include "Asservissement.h"
 
-bool isAWallInFrontOfMe(Position pos, Gladiator *gladiator)
-{
-    MazeSquare *currentSquare = getMazeSquareCoor(pos, gladiator);
-
-    // Déterminer la direction du déplacement
-    if ((pos.a >= -PI / 4 && pos.a < PI / 4))
-    { // Vers l'Est (droite)
-        return currentSquare->eastSquare == NULL;
-    }
-    else if (pos.a >= PI / 4 && pos.a < 3 * PI / 4)
-    { // Vers le Nord (haut)
-        return currentSquare->northSquare == NULL;
-    }
-    else if ((pos.a >= 3 * PI / 4 || pos.a < -3 * PI / 4))
-    { // Vers l'Ouest (gauche)
-        return currentSquare->westSquare == NULL;
-    }
-    else
-    { // Vers le Sud (bas)
-        return currentSquare->southSquare == NULL;
-    }
-}
-
 bool TempsEchantionnage(unsigned long TIME)
 { // ms
     static unsigned long LastMscount = millis();
@@ -42,8 +19,9 @@ Asservissement::Asservissement(Gladiator *gladiator)
 {
     this->gladiator = gladiator;
 
-    v_max = 1.f; acc_max = 0.8f;
-    
+    v_max = 1.f;
+    acc_max = 0.8f;
+
     ta = v_max / acc_max;
     d_max = v_max * v_max / acc_max;
 
@@ -155,37 +133,39 @@ void Asservissement::positionControl(Position targetPos)
     {
     case INITIALISATION:
     {
-        // etat_automate_depl = GO_TO_POS;
-        // float error = getDistance(currentPos, targetPos);
-        // if(error < Threshold){
-        // gladiator->log("case INITIALISATION : etat_automate_depl = ROTATION");
-        //     etat_automate_depl = ROTATION;
-        // }else{
-        // gladiator->log("case INITIALISATION : etat_automate_depl = GO_TO_POS");
-        // }
-
         if (getDistance(currentPos, targetPos) > Threshold)
         {
-            etat_automate_depl = GO_TO_POS;
             float dx = targetPos.x - currentPos.x;
             float dy = targetPos.y - currentPos.y;
-            float angleDifference = reductionAngle(atan2(dy, dx));
+            float angleDifference = reductionAngle(atan2(dy, dx) - currentPos.a);
+
             ta = v_max / acc_max;
             d_max = v_max * v_max / acc_max;
             traj = fnVitesse2(currentPos, targetPos);
-
-            if (abs(angleDifference) > toleranceAngle)
+            etat_automate_depl = GO_TO_POS;
+            if (abs(angleDifference) > (PI_F / 2.f))
             {
-                // Calcul de l'angle cible
-                target_angle = (angleDifference);
-                etat_automate_depl = ROTATION;
-
-                Serial.println("case INITIALISATION -> ROTATION");
+                sens = -1;                                                      // Reculer si l'angle est trop grand
+                angleDifference = reductionAngle(PI_F / 2.f - angleDifference); // Ajustement d'angle pour la rotation en marche arrière
             }
             else
             {
-                Serial.println("case INITIALISATION -> GO_TO_POS");
+                sens = 1; // Avancer normalement
             }
+
+            // // Vérifier si une rotation est nécessaire avant le déplacement
+            // if (abs(angleDifference) > toleranceAngle)
+            // {
+            //     // Calcul de l'angle cible
+            //     target_angle = angleDifference + currentPos.a;
+            //     etat_automate_depl = ROTATION;
+            //     Serial.println("case INITIALISATION -> ROTATION");
+            // }
+            // else
+            // {
+            //     etat_automate_depl = GO_TO_POS;
+            //     Serial.println("case INITIALISATION -> GO_TO_POS");
+            // }
 
             robot_radius = gladiator->robot->getRobotRadius();
             flag_available = false;
@@ -197,6 +177,7 @@ void Asservissement::positionControl(Position targetPos)
         start_time = millis();
     }
     break;
+
     case GO_TO_POS:
     {
         dt = (millis() - start_time) * 0.001f;
@@ -206,7 +187,7 @@ void Asservissement::positionControl(Position targetPos)
         float error = trajectory + getDistance(currentPos, targetPos);
         // gladiator->log("Position currentPos.x = %f, currentPos.y = %f, currentPos.a = %f, error = %f",currentPos.x, currentPos.y, currentPos.a, error);
         // gladiator->log("error = %f", error);
-        float pidOutput = calculatePID(error, dt, goTo);
+        float pidOutput = calculatePID(sens * error, dt, goTo);
         // // gladiator->log("pidOutput = %f", pidOutput);
 
         // // gladiator->log("trajectory = %f", trajectory);
@@ -222,19 +203,20 @@ void Asservissement::positionControl(Position targetPos)
         if (d > Threshold)
         {
             float rho = atan2(dy, dx);
-            float consw = kw * reductionAngle(rho - currentPos.a);
+            float angleDifference = sens > 0 ? reductionAngle(rho - currentPos.a) : reductionAngle(PI_F + rho - currentPos.a);
+            float consw = kw * angleDifference;
 
-            float consv = kv * d * pow(cos(reductionAngle(rho - currentPos.a)), 15);
+            float consv = sens * kv * d * pow(abs(cos(abs(angleDifference))), 15);
             // consw = abs(consw) > wlimit ? (consw > 0 ? 1 : -1) * wlimit : consw;
             // consv = abs(consv) > vlimit ? (consv > 0 ? 1 : -1) * vlimit : consv;
 
             // Check if moving backward is more efficient
-            float angleDifference = reductionAngle(rho - currentPos.a);
-            if (abs(angleDifference) > PI / 2.)
-            {
-                // gladiator->log("angleDifference : %f >PI/2, dt : %f", angleDifference, dt);
-                consv = -consv; // Move backward if turning more than 90 degrees
-            }
+
+            // if (abs(angleDifference) > PI / 2.)
+            // {
+            //     // gladiator->log("angleDifference : %f >PI/2, dt : %f", angleDifference, dt);
+            //     consv = -consv; // Move backward if turning more than 90 degrees
+            // }
 
             consvl = consv - (robot_radius * consw); // GFA 3.6.2
             consvr = consv + (robot_radius * consw); // GFA 3.6.2
@@ -275,7 +257,7 @@ void Asservissement::positionControl(Position targetPos)
         float angleError = reductionAngle(target_angle - currentPos.a);
 
         // Log pour le debug
-        // gladiator->log("currentPos.a = %f, targetAngle = %f, angleError = %f", currentPos.a, targetAngle, angleError);
+        gladiator->log("currentPos.a = %f, targetAngle = %f, angleError = %f", currentPos.a * 180.f / PI_F, target_angle * 180.f / PI_F, angleError * 180.f / PI_F);
 
         // Application du correcteur PID
         float pidOutput = calculatePID(angleError, dt, rotation);
@@ -292,7 +274,7 @@ void Asservissement::positionControl(Position targetPos)
         {
             consvr = 0;
             consvl = 0;
-            etat_automate_depl = GO_TO_POS;
+            etat_automate_depl = INITIALISATION;
             start_time = millis();
             // Serial.println("case ROTATION -> GO_TO_POS\n");
         }
