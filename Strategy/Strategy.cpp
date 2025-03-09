@@ -50,6 +50,26 @@ bool StateMachine::CloseEnemy(float dist_thresh)
     return near;
 }
 
+bool StateMachine::CloseDeadEnemy(float dist_thresh)
+{
+    bool near = false;
+    RobotData my_data = game->gladiator->robot->getData();
+
+    RobotList ids_list = game->gladiator->game->getPlayingRobotsId();
+    for (int i = 0; i < 4; i++)
+    {
+        if (ids_list.ids[i] != game->myData.id && ids_list.ids[i] != game->allyData.id)
+        {
+            RobotData others_data = game->gladiator->game->getOtherRobotData(ids_list.ids[i]);
+            if (getDistance(my_data.position, others_data.position) < dist_thresh && others_data.lifes == 0)
+            {
+                near = true;
+            }
+        }
+    }
+    return near;
+}
+
 bool StateMachine::CloseMaxWall()
 {
     bool near = false;
@@ -186,6 +206,7 @@ void StateMachine::strategy()
 {
     // Variables de gestion des ennemis
     bool close_to_enemy = CloseEnemy(game->squareSize * 2.f);
+    bool close_dead_enemy = CloseDeadEnemy(game->squareSize);
     bool attack = true;
 
     // game->gladiator->log("void StateMachine::transition() : Possède une fusée : %d", t_recherche_fusee);
@@ -260,6 +281,10 @@ void StateMachine::strategy()
                 {
                     currentState = State::EVADE;
                 }
+            }
+            else if(close_dead_enemy)
+            {
+                currentState = State::EVADE;
             }
             else
             {
@@ -336,7 +361,7 @@ void StateMachine::strategy()
             nextPos = getMazeSquareCoor({6, 6, 0}, game->gladiator);
         }
         game->gotoSquare(nextPos, 1);
-        currentState = State::SURVIVAL;
+        currentState = State::WAIT;
     }
     break;
 
@@ -357,7 +382,7 @@ void StateMachine::strategy()
         }
         MazeSquare target_square = {uint8_t(int(current_square->i) + sg_x), uint8_t(int(current_square->j) + sg_y)};
         game->gotoSquare(&target_square);
-        currentState = State::SURVIVAL;
+        currentState = State::WAIT;
     }
     break;
     }

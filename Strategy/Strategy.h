@@ -41,6 +41,8 @@ public:
 
     bool CloseEnemy(float dist_thresh);
 
+    bool CloseDeadEnemy(float dist_thresh);
+
     bool CloseMaxWall();
 
     bool TimeToExplode();
