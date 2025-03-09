@@ -40,6 +40,8 @@ public:
     MazeSquare *getBestBomb();
 
     MazeSquare *getSafeSquare();
+
+    Position locateOpponents(Gladiator* gladiator);
 };
 
 #endif // STRATEGY_H
