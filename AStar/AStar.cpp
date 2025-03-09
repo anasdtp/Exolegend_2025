@@ -77,7 +77,7 @@ float complete_heurisic(Gladiator *gladiator, byte ni, byte nj)
     float cost_outside_square = 0;
     if (ni < min_index || ni > max_index || nj < min_index || nj > max_index)
     {
-        cost_outside_square = 5000.0f;
+        cost_outside_square = 10000.0f;
     }
 
     square_heuresique = gladiator->maze->getSquare(ni, nj);

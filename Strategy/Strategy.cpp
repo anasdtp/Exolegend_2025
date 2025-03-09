@@ -79,7 +79,7 @@ MazeSquare *StateMachine::getBestBomb()
     int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / game->gladiator->maze->getSquareSize());
     int min_index = 0, max_index = 11;
     min_index = (12 - next_maze_size) / 2, max_index = 11 - min_index;
-    if (game->current_time % 20000 > 13000) // On se dirige vers le centre du labyrinthe si il reste 7 secondes avant le prochain retrécissement
+    if (game->current_time % 20000 > 10000) // On se dirige vers le centre du labyrinthe si il reste 7 secondes avant le prochain retrécissement
     {
         min_index++;
         max_index--;
