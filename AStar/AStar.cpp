@@ -71,8 +71,17 @@ float heuristic_rotation(Gladiator *gladiator, byte ni, byte nj)
 
 float complete_heurisic(Gladiator *gladiator, byte ni, byte nj)
 {
+    int next_maze_size = int(gladiator->maze->getCurrentMazeSize() / gladiator->maze->getSquareSize());
+    int min_index = 0, max_index = 11;
+    min_index = (12 - next_maze_size) / 2, max_index = 11 - min_index;
+    float cost_outside_square = 0;
+    if (ni < min_index || ni > max_index || nj < min_index || nj > max_index)
+    {
+        cost_outside_square = 5000.0f;
+    }
+
     square_heuresique = gladiator->maze->getSquare(ni, nj);
-    float bomb_cost = (square != nullptr) ? 2 * square->danger : 0;
+    float bomb_cost = (square_heuresique != nullptr) ? 2 * square_heuresique->danger : 0;
     float angle_cost = heuristic_rotation(gladiator, ni, nj);
     return bomb_cost + angle_cost + 1; // +1 for distance
 }
