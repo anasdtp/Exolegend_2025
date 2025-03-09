@@ -75,25 +75,23 @@ MazeSquare *StateMachine::getBestBomb()
     this->current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
     this->nearest_bomb = getMazeSquareCoor(Position{6, 6, 0}, game->gladiator);
 
-    int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / 0.25);
+    int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / game->gladiator->maze->getSquareSize());
     int min_index = 0, max_index = 11;
-    if (game->current_time % 20000 == 13000) // S'il reste 7 secondes avant la fin on ne cherche pas une case sur les bouts du cadre
+    min_index = (12 - next_maze_size) / 2, max_index = 11 - min_index;
+    if (game->current_time % 20000 > 13000) // On se dirige vers le centre du labyrinthe si il reste 7 secondes avant le prochain retrécissement
     {
-        min_index = (12 - next_maze_size) / 2, max_index = 11 - min_index;
-    }
-    else // S'il reste 7 secondes avant la fin on ne cherche pas une case sur les bouts du cadre
-    {
-        min_index = (12 - next_maze_size) / 2 + 1, max_index = 11 - min_index + 1;
+        min_index = (12 - next_maze_size) / 2 +1, max_index = 11 - min_index -1;
     }
 
-    for (uint8_t i = min_index; i < max_index - 1; i++)
+    for (uint8_t i = min_index; i < max_index; i++)
     {
-        for (uint8_t j = min_index; j < max_index - 1; j++)
+        for (uint8_t j = min_index; j < max_index; j++)
         // for (uint8_t i = min_index + 1; i < max_index; i++)
         // {
         //     for (uint8_t j = min_index + 1; j < max_index; j++)
         {
             bomb_square = game->gladiator->maze->getSquare(i, j);
+            
             if (bomb_square->coin.value) // La case contient une bombe (ou coin, selon ta logique)
             {
                 // Obtenir la case du centre du terrain
@@ -101,17 +99,19 @@ MazeSquare *StateMachine::getBestBomb()
                 // La présence d'une obstacle augmente le score, la présence d'une bombe diminue le score, et la distance diminue le score
                 // La présence d'une bombe en cours diminue le score, et la présence d'une bombe non en cours augmente le score
                 // La présence d'une bombe non en cours diminue le score, et la présence d'une bombe en cours augmente le score
-                float score = -getDistance(current_square, bomb_square) + bomb_square->coin.value * 0.5f - bomb_square->danger * 1.0 - (bomb_square->possession == game->gladiator->robot->getData().teamId) * 1.0 + getDistance(bomb_square, game->gladiator->maze->getSquare(6, 6)) * 0.5;
+                float score = -getDistance(current_square, bomb_square) + bomb_square->coin.value * 0.5f - bomb_square->danger * 1.0f - (bomb_square->possession == game->gladiator->robot->getData().teamId) * 1.0f - getDistance(bomb_square, game->gladiator->maze->getSquare(6, 6)) * 0.5f;
                 if (score > max_score)
                 {
                     max_score = score;
-                    nearest_bomb = bomb_square;
+                    
+                    this->nearest_bomb = bomb_square;
+                    
                 }
             }
         }
     }
 
-    return nearest_bomb;
+    return this->nearest_bomb;
 }
 
 MazeSquare *StateMachine::getSafeSquare()
@@ -160,7 +160,7 @@ void StateMachine::strategy()
     // bool f_time_to_explode = TimeToExplode();
 
     data = game->gladiator->robot->getData();
-    square = game->gladiator->maze->getNearestSquare();
+    square = game->getCurrentSquare();
     neighbors_strat[0] = square->northSquare;
     neighbors_strat[1] = square->southSquare;
     neighbors_strat[2] = square->eastSquare;
@@ -219,7 +219,10 @@ void StateMachine::strategy()
         // On cherche où sont les bombes les plus proches et on s'y dirige et on les ramasse puis explose
         current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator); // me donne les distances en mètres
         nearest_bomb = getBestBomb();
-        game->gladiator->log("Nearest bomb %d", nearest_bomb->i);
+        if (nearest_bomb == nullptr){
+            nearest_bomb = game->gladiator->maze->getSquare(6, 6);
+        }
+        // game->gladiator->log("Nearest bomb %d", nearest_bomb->i);
 
         SimplePath path = simpleAStar(game->gladiator, current_square, nearest_bomb);
         if (path.length > 0)
@@ -241,7 +244,7 @@ void StateMachine::strategy()
             nextPos = getMazeSquareCoor({6, 6, 0}, game->gladiator);
             game->gotoSquare(nextPos);
         }
-        // currentState = State::WAIT;
+        currentState = State::WAIT;
     }
     break;
     }
