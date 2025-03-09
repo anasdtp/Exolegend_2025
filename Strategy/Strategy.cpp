@@ -3,8 +3,6 @@
 #include "Mathematiques/Mathematiques.h"
 #include "AStar/AStar.h"
 
-
-
 StateMachine::StateMachine(GameState *game)
 {
     this->game = game;
@@ -178,15 +176,10 @@ Position StateMachine::locateOpponents(Gladiator* gladiator) {
     return enemy_pos;
 }
 
-
-
-
-
 void StateMachine::strategy()
 {   
     //Variables de gestion des ennemis
-    float dist_thresh = 3;
-    bool close_to_enemy = CloseEnemy(dist_thresh);
+    bool close_to_enemy = CloseEnemy(game->squareSize*2.f);
     bool attack = true;
 
     // game->gladiator->log("void StateMachine::transition() : Possède une fusée : %d", t_recherche_fusee);
@@ -258,10 +251,6 @@ void StateMachine::strategy()
                     currentState = State::EVADE;
                 }
             }
-            else if (bomb)
-            {
-                currentState = State::EXPLORE_BOMB;
-            }
             else
             {
                 currentState = State::EXPLORE;
@@ -312,7 +301,6 @@ void StateMachine::strategy()
     }
     break;
     
-
     case State::ATTACK:
     {
         MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
@@ -342,32 +330,6 @@ void StateMachine::strategy()
         currentState = State::WAIT;
     }
     break;
-    
-
-    case State::ATTACK:
-    {
-        MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
-        Position enemy_pos = locateOpponents(game->gladiator);
-        MazeSquare *enemy_position = getMazeSquareCoor(enemy_pos,game->gladiator);
-
-        SimplePath path = simpleAStar(game->gladiator, current_square, enemy_position);
-        if (path.length > 0)
-        {
-            if (path.length > 1)
-            {
-                // Move robot through path.steps[0] to path.steps[path.length-1] // Remlacer par path.length-1 pour aller direct sur les bombes (pas besoin du else dans ce cas)
-                MazeSquare *nextPos = getMazeSquareCoor(path.steps[1], game->gladiator);
-                game->gotoSquare(nextPos);
-            }
-            else
-            {
-                MazeSquare *nextPos = getMazeSquareCoor(path.steps[0], game->gladiator);
-                game->gotoSquare(nextPos);
-            }
-        }
-        currentState = State::WAIT;
-    }
-    break;
 
     case State::EVADE:
     {
@@ -390,25 +352,5 @@ void StateMachine::strategy()
     }
     break;
 
-    case State::EVADE:
-    {
-        Position enemy_pos = locateOpponents(game->gladiator);
-        MazeSquare *enemy_position = getMazeSquareCoor(enemy_pos,game->gladiator);
-        MazeSquare *current_square = getMazeSquareCoor(data.position, game->gladiator);
-        int sg_x = 1;
-        int sg_y = 1;
-        if (current_square->i < enemy_position->i)
-        {
-            sg_x = -1;
-        }
-        if (current_square->j < enemy_position->j)
-        {
-            sg_y = -1;
-        }
-        MazeSquare target_square = {uint8_t(int(current_square->i) + sg_x), uint8_t(int(current_square->j) + sg_y)};
-        game->gotoSquare(&target_square);
-        currentState = State::WAIT;
-    }
-    break;
     }
 }
