@@ -12,7 +12,9 @@ public:
     {
         WAIT,
         SURVIVAL,
-        EXPLORE
+        EXPLORE,
+        ATTACK,
+        EVADE
     };
 
     GameState *game;
@@ -45,6 +47,8 @@ public:
     MazeSquare *getBestBomb();
 
     MazeSquare *getSafeSquare();
+
+    Position locateOpponents(Gladiator* gladiator);
 };
 
 #endif // STRATEGY_H
