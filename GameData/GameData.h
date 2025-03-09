@@ -24,7 +24,7 @@ public:
 
     float squareSize;
 
-    MazeSquare *maze[SIZE][SIZE];
+    MazeSquare *center_of_maze;
 
     GameState(Gladiator *gladiator, Asservissement *motors);
 
@@ -38,10 +38,13 @@ public:
     *               (0 pour laisser le robot choisir le sens optimale, 
     *                1 pour forcer le déplacement en avant, 
     *               -1 pour forcer le déplacement en arrière)
+    * @param level : le niveau de l'accélération, (1, 2, 3, 4, ...)
     */
-    void gotoSquare(MazeSquare *square, int sens = 0);
+    void gotoSquare(MazeSquare *square, int sens = 0, float acceleration_level = 1);
 
     Position getCurrentPosition();
 
     MazeSquare *getCurrentSquare();
+
+    bool isOutsideArena(MazeSquare *square);
 };

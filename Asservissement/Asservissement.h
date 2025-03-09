@@ -52,6 +52,9 @@ private:
     float kw; // = 3.f * 2.f;
     float kv; // = 0.75f * 2.f;
 
+    float kw_base;
+    float kv_base;
+
     unsigned long start_time;
     float dt;
 
@@ -98,6 +101,8 @@ public:
     {
         return flag_available;
     }
+
+    void setAccelerationLevel(float level);
 };
 
 #endif // ASSERVISSEMENT_H

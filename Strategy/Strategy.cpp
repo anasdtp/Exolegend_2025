@@ -30,45 +30,6 @@ void StateMachine::reset()
     etat_exploration = 0;
 }
 
-bool StateMachine::CloseEnemy(float dist_thresh)
-{
-    bool near = false;
-    RobotData my_data = game->gladiator->robot->getData();
-
-    RobotList ids_list = game->gladiator->game->getPlayingRobotsId();
-    for (int i = 0; i < 4; i++)
-    {
-        if (ids_list.ids[i] != game->myData.id && ids_list.ids[i] != game->allyData.id)
-        {
-            RobotData others_data = game->gladiator->game->getOtherRobotData(ids_list.ids[i]);
-            if (getDistance(my_data.position, others_data.position) < dist_thresh && others_data.lifes != 0)
-            {
-                near = true;
-            }
-        }
-    }
-    return near;
-}
-
-bool StateMachine::CloseDeadEnemy(float dist_thresh)
-{
-    bool near = false;
-    RobotData my_data = game->gladiator->robot->getData();
-
-    RobotList ids_list = game->gladiator->game->getPlayingRobotsId();
-    for (int i = 0; i < 4; i++)
-    {
-        if (ids_list.ids[i] != game->myData.id && ids_list.ids[i] != game->allyData.id)
-        {
-            RobotData others_data = game->gladiator->game->getOtherRobotData(ids_list.ids[i]);
-            if (getDistance(my_data.position, others_data.position) < dist_thresh && others_data.lifes == 0)
-            {
-                near = true;
-            }
-        }
-    }
-    return near;
-}
 
 bool StateMachine::CloseMaxWall()
 {
@@ -121,7 +82,7 @@ MazeSquare *StateMachine::getBestBomb()
                 // La présence d'une obstacle augmente le score, la présence d'une bombe diminue le score, et la distance diminue le score
                 // La présence d'une bombe en cours diminue le score, et la présence d'une bombe non en cours augmente le score
                 // La présence d'une bombe non en cours diminue le score, et la présence d'une bombe en cours augmente le score
-                float score = -getDistance(current_square, bomb_square) + bomb_square->coin.value * 0.5f - bomb_square->danger * 1.0f - (bomb_square->possession == game->gladiator->robot->getData().teamId) * 1.0f + getDistance(bomb_square, game->gladiator->maze->getSquare(6, 6)) * 0.5f;
+                float score = -getDistance(current_square, bomb_square) + bomb_square->coin.value * 0.5f - bomb_square->danger * 1.0f - (bomb_square->possession == game->gladiator->robot->getData().teamId) * 1.0f + getDistance(bomb_square, game->center_of_maze) * 0.5f;
                 if (score > max_score)
                 {
                     max_score = score;
@@ -177,28 +138,52 @@ MazeSquare *StateMachine::getSafeSquare()
     return current_square;
 }
 
-Position StateMachine::locateOpponents(Gladiator *gladiator)
+
+bool StateMachine::CloseEnemy(float dist_thresh)
 {
-    RobotData my_data = game->gladiator->robot->getData();
-    Position enemy_pos;
-    float min_dist = 100;
-    // Récupérer la liste des IDs des robots en jeu
-    RobotList ids_list = game->gladiator->game->getPlayingRobotsId();
+    bool near = false;
 
-    // Parcourir chaque robot et récupérer ses données
-    for (int i = 0; i < 4; i++)
+    if ((getDistance(game->myData.position, game->er1Data.position) < dist_thresh) && game->er1Data.lifes != 0)
     {
-
-        if (ids_list.ids[i] != game->myData.id && ids_list.ids[i] != game->allyData.id)
-        {
-            RobotData others_data = game->gladiator->game->getOtherRobotData(ids_list.ids[i]);
-            if (getDistance(my_data.position, others_data.position) < min_dist)
-            {
-                enemy_pos = others_data.position;
-            }
-        }
+        near = true;
     }
+    else if ((getDistance(game->myData.position, game->er2Data.position) < dist_thresh) && game->er2Data.lifes != 0)
+    {
+        near = true;
+    }
+    return near;
+}
 
+bool StateMachine::CloseDeadEnemy(float dist_thresh)
+{
+    bool near = false;
+
+    if ((getDistance(game->myData.position, game->er1Data.position) < dist_thresh) && game->er1Data.lifes == 0)
+    {
+        near = true;
+    }
+    else if ((getDistance(game->myData.position, game->er2Data.position) < dist_thresh) && game->er2Data.lifes == 0)
+    {
+        near = true;
+    }
+    return near;
+}
+
+Position StateMachine::nearestOpponent()
+{
+    Position enemy_pos;
+    float min_dist = 4.5;
+    // Récupérer la liste des IDs des robots en jeu
+    if (getDistance(game->myData.position, game->er1Data.position) < min_dist)
+    {
+        enemy_pos = game->er1Data.position;
+        min_dist = getDistance(game->myData.position, game->er1Data.position);
+    }
+    
+    if (getDistance(game->myData.position, game->er2Data.position) < min_dist)
+    {
+        enemy_pos = game->er2Data.position;
+    }
     return enemy_pos;
 }
 
@@ -206,8 +191,26 @@ void StateMachine::strategy()
 {
     // Variables de gestion des ennemis
     bool close_to_enemy = CloseEnemy(game->squareSize * 2.f);
-    bool close_dead_enemy = CloseDeadEnemy(game->squareSize);
+    bool close_dead_enemy = CloseDeadEnemy(game->squareSize*1.5f);
     bool attack = true;
+    
+    Position enemyPos = nearestOpponent();
+
+    float dx = enemyPos.x - game->gladiator->robot->getData().position.x;
+    float dy = enemyPos.y - game->gladiator->robot->getData().position.y;
+    
+    float angleToEnemy = atan2(dy, dx); // Angle entre le robot et l'ennemi
+    float angleDifference = reductionAngle(angleToEnemy - game->gladiator->robot->getData().position.a);
+
+    // Déterminer le comportement en fonction de l'angle
+    if (abs(angleDifference) < PI_F / 4.f) // Si l'ennemi est devant
+    {
+        attack = true;
+    }
+    else if (abs(angleDifference) > (3 * PI_F / 4.f)) // Si l'ennemi est derrière
+    {
+        attack = false;
+    }
 
     // game->gladiator->log("void StateMachine::transition() : Possède une fusée : %d", t_recherche_fusee);
     // bool f_close_enemy = CloseEnemy(0.5);
@@ -239,7 +242,7 @@ void StateMachine::strategy()
             sum += 1;
         }
     }
-    if (game->gladiator->maze->getCurrentMazeSize() / 0.25f < 7)
+    if (game->gladiator->maze->getCurrentMazeSize() / game->squareSize < 7)
     {
         sum_threshold = 1;
     }
@@ -297,11 +300,11 @@ void StateMachine::strategy()
     case State::SURVIVAL:
     {
         target_square = getSafeSquare();
-        game->gotoSquare(target_square);
+        game->gotoSquare(target_square, 0, 1.5);
         currentState = State::WAIT;
     }
     break;
-
+    
     case State::EXPLORE:
     {
         // On cherche où sont les bombes les plus proches et on s'y dirige et on les ramasse puis explose
@@ -309,7 +312,7 @@ void StateMachine::strategy()
         nearest_bomb = getBestBomb();
         if (nearest_bomb == nullptr)
         {
-            nearest_bomb = game->gladiator->maze->getSquare(6, 6);
+            nearest_bomb = game->center_of_maze;
         }
         // game->gladiator->log("Nearest bomb %d", nearest_bomb->i);
 
@@ -320,19 +323,17 @@ void StateMachine::strategy()
             {
                 // Move robot through path.steps[0] to path.steps[path.length-1] // Remlacer par path.length-1 pour aller direct sur les bombes (pas besoin du else dans ce cas)
                 nextPos = getMazeSquareCoor(path.steps[1], game->gladiator);
-                game->gotoSquare(nextPos);
             }
             else
             {
                 nextPos = getMazeSquareCoor(path.steps[0], game->gladiator);
-                game->gotoSquare(nextPos);
             }
         }
         else
         {
             nextPos = getMazeSquareCoor({6, 6, 0}, game->gladiator);
-            game->gotoSquare(nextPos);
         }
+        game->gotoSquare(nextPos);
         currentState = State::WAIT;
     }
     break;
@@ -340,7 +341,7 @@ void StateMachine::strategy()
     case State::ATTACK:
     {
         MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
-        Position enemy_pos = locateOpponents(game->gladiator);
+        Position enemy_pos = nearestOpponent();
         MazeSquare *enemy_position = getMazeSquareCoor(enemy_pos, game->gladiator);
 
         SimplePath path = simpleAStar(game->gladiator, current_square, enemy_position);
@@ -360,14 +361,14 @@ void StateMachine::strategy()
         {
             nextPos = getMazeSquareCoor({6, 6, 0}, game->gladiator);
         }
-        game->gotoSquare(nextPos, 1);
+        game->gotoSquare(nextPos, 1, 1.5);
         currentState = State::WAIT;
     }
     break;
 
     case State::EVADE:
     {
-        Position enemy_pos = locateOpponents(game->gladiator);
+        Position enemy_pos = nearestOpponent();
         MazeSquare *enemy_position = getMazeSquareCoor(enemy_pos, game->gladiator);
         MazeSquare *current_square = getMazeSquareCoor(data.position, game->gladiator);
         int sg_x = 1;
@@ -380,9 +381,16 @@ void StateMachine::strategy()
         {
             sg_y = -1;
         }
-        MazeSquare target_square = {uint8_t(int(current_square->i) + sg_x), uint8_t(int(current_square->j) + sg_y)};
-        game->gotoSquare(&target_square);
-        currentState = State::WAIT;
+
+        MazeSquare *target_square = game->gladiator->maze->getSquare(uint8_t(int(current_square->i) + sg_x), uint8_t(int(current_square->j) + sg_y));
+
+        if(game->isOutsideArena(target_square)){
+            currentState = State::EXPLORE;
+        }
+        else{
+            game->gotoSquare(target_square, 0, 1.5);
+            currentState = State::WAIT;
+        }
     }
     break;
     }

@@ -45,6 +45,9 @@ Asservissement::Asservissement(Gladiator *gladiator)
     kw = 3.f * 0.9f;
     kv = 0.75f * 0.9f;
 
+    kv_base = kv;
+    kw_base = kw;
+
     etat_automate_depl = INITIALISATION;
     flag_available = true;
 }
@@ -305,4 +308,13 @@ void Asservissement::setTargetPos(Position targetPos, int sens)
     this->targetPos = targetPos;
     flag_available = false;
     forcer_sens = sens;
+}
+
+void Asservissement::setAccelerationLevel(float level)
+{
+    if(level < 1){
+        level = 1;
+    }
+    // this->kv = this->kv_base * level;
+    // this->kw = this->kv_base * level;
 }

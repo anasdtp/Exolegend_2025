@@ -51,7 +51,7 @@ public:
 
     MazeSquare *getSafeSquare();
 
-    Position locateOpponents(Gladiator* gladiator);
+    Position nearestOpponent();
 };
 
 #endif // STRATEGY_H
