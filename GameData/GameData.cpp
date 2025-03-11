@@ -13,6 +13,9 @@ void GameState::Update()
     allyData = gladiator->game->getOtherRobotData(allyData.id);
     er1Data = gladiator->game->getOtherRobotData(er1Data.id);
     er2Data = gladiator->game->getOtherRobotData(er2Data.id);
+    squareSize = gladiator->maze->getSquareSize();
+    mazeSize = uint8_t(round(gladiator->maze->getCurrentMazeSize() / squareSize));
+    center_of_maze = gladiator->maze->getSquare(SIZE / 2, SIZE / 2);
 }
 
 void GameState::reset()
@@ -43,6 +46,8 @@ void GameState::reset()
 
     squareSize = gladiator->maze->getSquareSize();
 
+    center_of_maze = gladiator->maze->getSquare(SIZE / 2, SIZE / 2);
+
     switch (myData.id)
     {
     case 128:
@@ -65,4 +70,21 @@ void GameState::gotoSquare(MazeSquare *square, int sens)
 
 MazeSquare *GameState::getCurrentSquare(){
     return getMazeSquareCoor(gladiator->robot->getData().position, gladiator);
+}
+
+bool GameState::isOutsideArena(MazeSquare *square)
+{
+    uint8_t min_index = (SIZE - this->mazeSize) / 2; 
+    uint8_t max_index = ((SIZE - 1) - min_index);
+
+    if (square->i < min_index || square->i > max_index || square->j < min_index || square->j > max_index)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool GameState::isOutsideArena(Position pos)
+{
+    return isOutsideArena(getMazeSquareCoor(pos, gladiator));
 }

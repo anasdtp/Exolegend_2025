@@ -13,6 +13,7 @@ using FuncType = std::function<float(float)>;
 
 #define INITIALISATION 0
 #define GO_TO_POS 1
+#define ATTAQUE 2
 #define ROTATION 4
 #define ARRET 3
 
@@ -59,6 +60,8 @@ private:
     float forcer_sens;
     float target_angle; //Pour l'etat ROTATION
 
+    float sens_rotation_attaque;
+
     int etat_automate_depl = INITIALISATION;
     int next_state = INITIALISATION;//Pour que l'etat ROTATION sache où il doit aller après avoir fini de tourner
 
@@ -98,6 +101,8 @@ public:
     {
         return flag_available;
     }
+
+    void activateOscillationToAttack();
 };
 
 #endif // ASSERVISSEMENT_H

@@ -42,6 +42,8 @@ Asservissement::Asservissement(Gladiator *gladiator)
     consvl = 0;
     consvr = 0;
 
+    sens_rotation_attaque = 1.f;
+
     kw = 3.f * 0.9f;
     kv = 0.75f * 0.9f;
 
@@ -160,6 +162,7 @@ void Asservissement::positionControl(Position targetPos)
             //     // Calcul de l'angle cible
             //     target_angle = angleDifference + currentPos.a;
             //     etat_automate_depl = ROTATION;
+            //     next_state = GO_TO_POS;
             //     Serial.println("case INITIALISATION -> ROTATION");
             // }
             // else
@@ -232,6 +235,7 @@ void Asservissement::positionControl(Position targetPos)
         {
             // Serial.println("case GO_TO_POS : etat_automate_depl = ROTATION");
             // etat_automate_depl = ROTATION;
+            // next_state = ARRET;
             Serial.println("case GO_TO_POS -> ARRET");
             etat_automate_depl = ARRET;
             flag_available = true;
@@ -245,11 +249,22 @@ void Asservissement::positionControl(Position targetPos)
         //     consvr = 0;
         //     consvl = 0;
         //     etat_automate_depl = ROTATION;
+        //     next_state = ARRET;
         //     target_angle = currentPos.a + PI;
         //     Serial.println("case GO_TO_POS -> ARRET");
         // }
     }
     break;
+    case ATTAQUE:
+    {
+        //Oscillation de gauche à droite du robot en utilisant l'etat ROTATION avec target_angle
+        // Serial.println("case ATTAQUE -> ROTATION\n");
+        etat_automate_depl = ROTATION;
+        next_state = ATTAQUE;
+        target_angle = currentPos.a + (sens_rotation_attaque * PI_F / 4.f);
+        sens_rotation_attaque = -sens_rotation_attaque;
+        start_time = millis();
+    }break;
     case ROTATION:
     {
         dt = (millis() - start_time) * 0.001f;
@@ -258,7 +273,7 @@ void Asservissement::positionControl(Position targetPos)
         float angleError = reductionAngle(target_angle - currentPos.a);
 
         // Log pour le debug
-        gladiator->log("currentPos.a = %f, targetAngle = %f, angleError = %f", currentPos.a * 180.f / PI_F, target_angle * 180.f / PI_F, angleError * 180.f / PI_F);
+        // gladiator->log("currentPos.a = %f, targetAngle = %f, angleError = %f", currentPos.a * 180.f / PI_F, target_angle * 180.f / PI_F, angleError * 180.f / PI_F);
 
         // Application du correcteur PID
         float pidOutput = calculatePID(angleError, dt, rotation);
@@ -275,7 +290,7 @@ void Asservissement::positionControl(Position targetPos)
         {
             consvr = 0;
             consvl = 0;
-            etat_automate_depl = INITIALISATION;
+            etat_automate_depl = next_state;
             start_time = millis();
             // Serial.println("case ROTATION -> GO_TO_POS\n");
         }
@@ -302,7 +317,15 @@ void Asservissement::positionControl(Position targetPos)
 
 void Asservissement::setTargetPos(Position targetPos, int sens)
 {
-    this->targetPos = targetPos;
-    flag_available = false;
     forcer_sens = sens;
+    if(getDistance(this->targetPos, targetPos) > Threshold){
+        this->targetPos = targetPos;
+        etat_automate_depl = INITIALISATION;
+        flag_available = false;
+    }
+}
+
+void Asservissement::activateOscillationToAttack(){
+    flag_available = true;
+    etat_automate_depl = ATTAQUE;
 }

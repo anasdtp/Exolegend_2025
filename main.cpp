@@ -29,12 +29,12 @@ void reset()
 {
     // // fonction de reset:
     game->reset();
+    match_started = false;
 
     // initialisation de toutes vos variables avant le début d'un match
     // gladiator->log("Call of reset function"); // GFA 4.5.1
     game->goal = gladiator->robot->getData().position;
     motors->setTargetPos(game->goal);
-    match_started = false;
 }
 
 void loop()
@@ -47,19 +47,16 @@ void loop()
             game->start_time_match = millis();
             match_started = true;
         }
-        game->current_time = (millis() - game->start_time_match);
-        // gladiator->log("targetpos : %f", motors->getTargetPos().x);
         game->Update();
-        // gladiator->log("targetpos : %f", motors->getTargetPos().x);
-        statemachine->strategy();
 
-        // gladiator->log("targetpos : %f", motors->getTargetPos().y);
+        game->current_time = (millis() - game->start_time_match);
 
         if (TempsEchantionnage(TE_MS))
         {
-            gladiator->log("Pos.x : %d", int(motors->getTargetPos().x));
             motors->positionControl(motors->getTargetPos());
         }
+
+        statemachine->strategy();
         // robot_state_machine->machine();
     }
 }

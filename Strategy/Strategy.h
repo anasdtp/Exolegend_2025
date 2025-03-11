@@ -20,7 +20,7 @@ public:
     GameState *game;
     State currentState;
     MazeSquare *square;
-    RobotData data;
+
     MazeSquare *target_square;
     MazeSquare *current_square;
     MazeSquare *nearest_bomb;
@@ -51,7 +51,9 @@ public:
 
     MazeSquare *getSafeSquare();
 
-    Position locateOpponents(Gladiator* gladiator);
+    MazeSquare *nearestOpponent();
+    
+    void nearestOpponent(Position &pos);
 };
 
 #endif // STRATEGY_H

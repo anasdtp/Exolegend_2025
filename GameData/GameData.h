@@ -24,7 +24,11 @@ public:
 
     float squareSize;
 
+    uint8_t mazeSize; //Size of the maze in number of squares
+
     MazeSquare *maze[SIZE][SIZE];
+
+    MazeSquare *center_of_maze;
 
     GameState(Gladiator *gladiator, Asservissement *motors);
 
@@ -41,7 +45,8 @@ public:
     */
     void gotoSquare(MazeSquare *square, int sens = 0);
 
-    Position getCurrentPosition();
-
     MazeSquare *getCurrentSquare();
+
+    bool isOutsideArena(MazeSquare *square);
+    bool isOutsideArena(Position pos);
 };
