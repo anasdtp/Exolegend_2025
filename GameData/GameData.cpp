@@ -16,6 +16,9 @@ void GameState::Update()
     squareSize = gladiator->maze->getSquareSize();
     mazeSize = uint8_t(round(gladiator->maze->getCurrentMazeSize() / squareSize));
     center_of_maze = gladiator->maze->getSquare(SIZE / 2, SIZE / 2);
+
+    min_index = (SIZE - this->mazeSize) / 2; 
+    max_index = ((SIZE - 1) - min_index);
 }
 
 void GameState::reset()
@@ -48,6 +51,11 @@ void GameState::reset()
 
     center_of_maze = gladiator->maze->getSquare(SIZE / 2, SIZE / 2);
 
+    mazeSize = uint8_t(round(gladiator->maze->getCurrentMazeSize() / squareSize));
+
+    min_index = (SIZE - this->mazeSize) / 2; 
+    max_index = ((SIZE - 1) - min_index);
+
     switch (myData.id)
     {
     case 128:
@@ -74,9 +82,6 @@ MazeSquare *GameState::getCurrentSquare(){
 
 bool GameState::isOutsideArena(MazeSquare *square)
 {
-    uint8_t min_index = (SIZE - this->mazeSize) / 2; 
-    uint8_t max_index = ((SIZE - 1) - min_index);
-
     if (square->i < min_index || square->i > max_index || square->j < min_index || square->j > max_index)
     {
         return true;
@@ -87,4 +92,13 @@ bool GameState::isOutsideArena(MazeSquare *square)
 bool GameState::isOutsideArena(Position pos)
 {
     return isOutsideArena(getMazeSquareCoor(pos, gladiator));
+}
+
+bool GameState::isOutsideFuturArena(MazeSquare *square)
+{
+    if (square->i < (min_index + 1) || square->i > (max_index - 1) || square->j < (min_index + 1) || square->j > (max_index - 1))
+    {
+        return true;
+    }
+    return false;
 }

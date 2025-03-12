@@ -39,9 +39,9 @@ public:
 
     void strategy();
 
-    bool CloseEnemy(float dist_thresh);
+    bool CloseEnemy(uint8_t dist_thresh);
 
-    bool CloseDeadEnemy(float dist_thresh);
+    bool CloseDeadEnemy(uint8_t dist_thresh);
 
     bool CloseMaxWall();
 

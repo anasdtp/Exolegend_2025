@@ -29,10 +29,10 @@ void StateMachine::reset()
     etat_exploration = 0;
 }
 
-bool StateMachine::CloseEnemy(float dist_thresh)
+bool StateMachine::CloseEnemy(uint8_t dist_thresh)
 {
-    float dist1 = getDistance(game->myData.position, game->er1Data.position);
-    float dist2 = getDistance(game->myData.position, game->er2Data.position);
+    uint8_t dist1 = getDistance(game->myData.position, game->er1Data.position) / game->squareSize;
+    uint8_t dist2 = getDistance(game->myData.position, game->er2Data.position) / game->squareSize;
 
     if (dist1 < dist_thresh && game->er1Data.lifes != 0)
     {
@@ -53,10 +53,10 @@ bool StateMachine::CloseEnemy(float dist_thresh)
     return false;
 }
 
-bool StateMachine::CloseDeadEnemy(float dist_thresh)
+bool StateMachine::CloseDeadEnemy(uint8_t dist_thresh)
 {
-    float dist1 = getDistance(game->myData.position, game->er1Data.position);
-    float dist2 = getDistance(game->myData.position, game->er2Data.position);
+    uint8_t dist1 = getDistance(game->myData.position, game->er1Data.position) / game->squareSize;
+    uint8_t dist2 = getDistance(game->myData.position, game->er2Data.position) / game->squareSize;
 
     if (dist1 < dist_thresh && game->er1Data.lifes == 0)
     {
@@ -87,13 +87,7 @@ bool StateMachine::CloseMaxWall()
     {
         // game->gladiator->log("void StateMachine::CloseMaxWall() : Prochain retrécissement dans 3 secondes");
         MazeSquare *square = game->getCurrentSquare();
-        uint8_t next_wall_size = game->mazeSize - 2;
-        uint8_t min_index = (SIZE - next_wall_size) / 2; 
-        uint8_t max_index = (SIZE - min_index);
-        if(square->i < min_index || square->i > max_index || square->j < min_index || square->j > max_index)
-        {
-            near = true;
-        }
+        near = game->isOutsideFuturArena(square);
     }
     return near;
 }
@@ -166,7 +160,11 @@ MazeSquare *StateMachine::getSafeSquare()
         }
     }
 
-    return game->center_of_maze;
+    if(game->isOutsideFuturArena(current_square)){
+        // game->gladiator->log("isOutsideFuturArena");
+        return game->center_of_maze;
+    }
+    return current_square;//Sinon on reste sur place en attendant un changement, comme une bombe qui explose
 
     // // Backup quand même ; il s'agit du code utilisé précédemment pour rentrer dans les limites du terrain
     // int sg_x = 1;
@@ -214,8 +212,8 @@ void StateMachine::nearestOpponent(Position &pos)
 
 void StateMachine::strategy()
 {
-    bool close_to_enemy = CloseEnemy(game->squareSize * 3.f);
-    bool close_dead_enemy = CloseDeadEnemy(game->squareSize*2.f);
+    bool close_to_enemy = CloseEnemy(3);
+    bool close_dead_enemy = CloseDeadEnemy(1);
     bool attack = true;
     
     Position enemyPos;
@@ -286,7 +284,7 @@ void StateMachine::strategy()
         {
             currentState = State::SURVIVAL;
         }
-        else if (game->motors->available())
+        else //if (game->motors->available())
         {
             // if (f_close_enemy)
             // {
@@ -394,7 +392,7 @@ void StateMachine::strategy()
         if(game->isOutsideArena(nextPos)){
             currentState = State::EXPLORE;
         }
-        else if(getDistance(current_square, enemy_position) < 2){
+        else if(getDistance(current_square, enemy_position) < 10){
             game->motors->activateOscillationToAttack();
             currentState = State::WAIT;
         }

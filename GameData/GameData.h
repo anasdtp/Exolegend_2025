@@ -25,6 +25,8 @@ public:
     float squareSize;
 
     uint8_t mazeSize; //Size of the maze in number of squares
+    uint8_t min_index;
+    uint8_t max_index;
 
     MazeSquare *maze[SIZE][SIZE];
 
@@ -49,4 +51,6 @@ public:
 
     bool isOutsideArena(MazeSquare *square);
     bool isOutsideArena(Position pos);
+
+    bool isOutsideFuturArena(MazeSquare *square);
 };

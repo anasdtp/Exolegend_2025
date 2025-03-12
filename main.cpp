@@ -47,16 +47,17 @@ void loop()
             game->start_time_match = millis();
             match_started = true;
         }
-        game->Update();
-
         game->current_time = (millis() - game->start_time_match);
 
         if (TempsEchantionnage(TE_MS))
         {
-            motors->positionControl(motors->getTargetPos());
-        }
+            game->Update();
 
-        statemachine->strategy();
+            motors->positionControl(motors->getTargetPos());
+
+            statemachine->strategy();
+        }
+        
         // robot_state_machine->machine();
     }
 }

@@ -109,8 +109,8 @@ SimplePath simpleAStar(GameState *game, MazeSquare *current_square, MazeSquare *
     neighbors[2] = nullptr;
     neighbors[3] = nullptr;
 
-    Position start = getSquareCoor(current_square, game->squareSize);
-    Position target = getSquareCoor(target_square, game->squareSize);
+    // Position start = getSquareCoor(current_square, game->squareSize);
+    // Position target = getSquareCoor(target_square, game->squareSize);
 
     // Algorithm data structures
     bool visited[12][12] = {false};
