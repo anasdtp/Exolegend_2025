@@ -7,12 +7,12 @@ MazeSquare *neighbors[4];
 MazeSquare *neighbor;
 MazeSquare *robot_square;
 
-float heuristic_rotation(Gladiator *gladiator, byte ni, byte nj)
+float heuristic_rotation(GameState *game, uint8_t ni, uint8_t nj)
 {
-    Position current_pos = gladiator->robot->getData().position;
-    robot_square = getMazeSquareCoor(current_pos, gladiator);
+    Position current_pos = game->myData.position;
+    robot_square = game->getCurrentSquare();
 
-    float angle_to_turn;
+    float angle_to_turn = 0;
     uint8_t i_n = ni;
     uint8_t j_n = nj;
     uint8_t i_r = robot_square->i;
@@ -69,65 +69,53 @@ float heuristic_rotation(Gladiator *gladiator, byte ni, byte nj)
     return angle_cost;
 }
 
-float complete_heurisic(Gladiator *gladiator, byte ni, byte nj)
+float complete_heurisic(GameState *game, uint8_t ni, uint8_t nj)
 {
-    int next_maze_size = int(gladiator->maze->getCurrentMazeSize() / gladiator->maze->getSquareSize());
-    int min_index = 0, max_index = 11;
-    min_index = (12 - next_maze_size) / 2, max_index = 11 - min_index;
+    uint8_t min_index = (SIZE - game->mazeSize) / 2; 
+    uint8_t max_index = ((SIZE - 1) - min_index);
+
     float cost_outside_square = 0;
     if (ni < min_index || ni > max_index || nj < min_index || nj > max_index)
     {
         cost_outside_square = 10000.0f;
     }
+
     float cost_lives = 0.f;
-    RobotList ids_list = gladiator->game->getPlayingRobotsId();
-    for (int i = 0; i < 4; i++)
+    if (!game->er1Data.lifes || !game->er2Data.lifes)
     {
-        if (ids_list.ids[i] != gladiator->robot->getData().id)
-        {
-            RobotData robot_data = gladiator->game->getOtherRobotData(ids_list.ids[i]);
-            if (!(robot_data.lifes))
-            {
-                cost_lives = 500.f;
-            }
-        }
+        cost_lives = 500.f;
     }
-    square_heuresique = gladiator->maze->getSquare(ni, nj);
+
+    square_heuresique = game->gladiator->maze->getSquare(ni, nj);
     float bomb_cost = (square_heuresique != nullptr) ? 2 * square_heuresique->danger : 0;
-    float angle_cost = heuristic_rotation(gladiator, ni, nj);
+    float angle_cost = heuristic_rotation(game, ni, nj);
     return bomb_cost + angle_cost + 1.0f + cost_outside_square + cost_lives; // +1 for distance
 }
 
 // Simplified A* Implementation
-SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSquare *target_square)
+SimplePath simpleAStar(GameState *game, MazeSquare *current_square, MazeSquare *target_square)
 {
     SimplePath path;
     path.length = 0;
+    
+    // Early exit for invalid positions
+    if (game->isOutsideArena(current_square) || game->isOutsideArena(target_square))
+    {return path;}
+
     square = nullptr;
     neighbor = nullptr;
     neighbors[0] = nullptr;
     neighbors[1] = nullptr;
     neighbors[2] = nullptr;
     neighbors[3] = nullptr;
-    float CELL_SIZE = gladiator->maze->getSquareSize();
 
-    Position start = getSquareCoor(current_square, CELL_SIZE);
-    Position target = getSquareCoor(target_square, CELL_SIZE);
-
-    // Convert positions to grid coordinates
-    byte start_i = static_cast<byte>(start.x / CELL_SIZE);
-    byte start_j = static_cast<byte>(start.y / CELL_SIZE);
-    byte target_i = static_cast<byte>(target.x / CELL_SIZE);
-    byte target_j = static_cast<byte>(target.y / CELL_SIZE);
-
-    // Early exit for invalid positions
-    if (start_i >= 12 || start_j >= 12 || target_i >= 12 || target_j >= 12)
-        return path;
+    // Position start = getSquareCoor(current_square, game->squareSize);
+    // Position target = getSquareCoor(target_square, game->squareSize);
 
     // Algorithm data structures
     bool visited[12][12] = {false};
-    byte parent_i[12][12];
-    byte parent_j[12][12];
+    uint8_t parent_i[12][12];
+    uint8_t parent_j[12][12];
     memset(parent_i, 0xFF, sizeof(parent_i)); // Initialize to invalid
     memset(parent_j, 0xFF, sizeof(parent_j));
 
@@ -135,7 +123,7 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
     int openCount = 0;
 
     // Start with initial position
-    openList[openCount++] = {start_i, start_j, 0};
+    openList[openCount++] = {current_square->i, current_square->j, 0};
 
     while (openCount > 0)
     {
@@ -144,20 +132,20 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
         for (int i = 1; i < openCount; i++)
         {
             if (openList[i].total_cost < openList[bestIndex].total_cost)
-                bestIndex = i;
+                {bestIndex = i;}
         }
         Node current = openList[bestIndex];
 
         // Chemin trouvé - reconstruction
-        if (current.i == target_i && current.j == target_j)
+        if (current.i == target_square->i && current.j == target_square->j)
         {
-            byte i = current.i, j = current.j;
+            uint8_t i = current.i, j = current.j;
             while (i != 0xFF)
             { // Suivre les parents
                 path.steps[path.length++] = {
-                    (i + 0.5f) * CELL_SIZE,
-                    (j + 0.5f) * CELL_SIZE};
-                byte pi = parent_i[i][j], pj = parent_j[i][j];
+                    (i + 0.5f) * game->squareSize,
+                    (j + 0.5f) * game->squareSize};
+                uint8_t pi = parent_i[i][j], pj = parent_j[i][j];
                 i = pi;
                 j = pj;
             }
@@ -177,7 +165,7 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
         static const int dx[4] = {0, 0, 1, -1};
         static const int dy[4] = {1, -1, 0, 0};
 
-        square = gladiator->maze->getSquare(current.i, current.j);
+        square = game->gladiator->maze->getSquare(current.i, current.j);
         neighbors[0] = square->northSquare;
         neighbors[1] = square->southSquare;
         neighbors[2] = square->eastSquare;
@@ -186,8 +174,8 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
         for (int dir = 0; dir < 4; dir++)
         {
             // Inside the neighbor loop:
-            byte ni = current.i + dx[dir];
-            byte nj = current.j + dy[dir];
+            uint8_t ni = current.i + dx[dir];
+            uint8_t nj = current.j + dy[dir];
 
             // Skip out-of-bounds or visited nodes
             if (ni >= 12 || nj >= 12 || visited[ni][nj])
@@ -196,14 +184,14 @@ SimplePath simpleAStar(Gladiator *gladiator, MazeSquare *current_square, MazeSqu
             neighbor = neighbors[dir];
             bool isWall = (neighbor == nullptr);
 
-            float move_cost = current.total_cost + CELL_SIZE;
+            float move_cost = current.total_cost + game->squareSize;
             if (isWall)
             {
                 move_cost += WALL_WEIGHT; // Apply penalty
-                neighbor = gladiator->maze->getSquare(ni, nj);
+                neighbor = game->gladiator->maze->getSquare(ni, nj);
             }
 
-            float heuristic = complete_heurisic(gladiator, ni, nj);
+            float heuristic = complete_heurisic(game, ni, nj);
             float total_cost = move_cost + heuristic;
 
             // Update or add to open list

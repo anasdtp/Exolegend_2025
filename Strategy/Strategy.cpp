@@ -10,7 +10,6 @@ StateMachine::StateMachine(GameState *game)
     currentState = State::EXPLORE;
     etat_exploration = 0;
     square = nullptr;
-    data = game->gladiator->robot->getData();
     target_square = nullptr;
     current_square = nullptr;
     nearest_bomb = nullptr;
@@ -30,6 +29,54 @@ void StateMachine::reset()
     etat_exploration = 0;
 }
 
+bool StateMachine::CloseEnemy(uint8_t dist_thresh)
+{
+    uint8_t dist1 = getDistance(game->myData.position, game->er1Data.position) / game->squareSize;
+    uint8_t dist2 = getDistance(game->myData.position, game->er2Data.position) / game->squareSize;
+
+    if (dist1 < dist_thresh && game->er1Data.lifes != 0)
+    {
+        if(!game->isOutsideArena(game->er1Data.position))
+        {
+            return true;
+        }
+    }
+
+    if (dist2 < dist_thresh && game->er2Data.lifes != 0)
+    {
+        if(!game->isOutsideArena(game->er2Data.position))
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+bool StateMachine::CloseDeadEnemy(uint8_t dist_thresh)
+{
+    uint8_t dist1 = getDistance(game->myData.position, game->er1Data.position) / game->squareSize;
+    uint8_t dist2 = getDistance(game->myData.position, game->er2Data.position) / game->squareSize;
+
+    if (dist1 < dist_thresh && game->er1Data.lifes == 0)
+    {
+        if(!game->isOutsideArena(game->er1Data.position))
+        {
+            return true;
+        }
+    }
+
+    if (dist2 < dist_thresh && game->er2Data.lifes == 0)
+    {
+        if(!game->isOutsideArena(game->er2Data.position))
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 
 bool StateMachine::CloseMaxWall()
 {
@@ -40,13 +87,8 @@ bool StateMachine::CloseMaxWall()
     if (game->current_time % 20000 > 17000) // On se dirige vers le centre du labyrinthe si il reste 5 secondes avant le prochain retrécissement
     {
         // game->gladiator->log("void StateMachine::CloseMaxWall() : Prochain retrécissement dans 3 secondes");
-        Position current_pos = game->gladiator->robot->getData().position;
-        float next_wall_size = game->gladiator->maze->getCurrentMazeSize() - 0.5f;
-        float min_x = (3 - next_wall_size) / 2, max_x = 3 - min_x, min_y = (3 - next_wall_size) / 2, max_y = 3 - min_y;
-        if (current_pos.x < min_x || current_pos.x > max_x || current_pos.y < min_y || current_pos.y > max_y)
-        {
-            near = true;
-        }
+        MazeSquare *square = game->getCurrentSquare();
+        near = game->isOutsideFuturArena(square);
     }
     return near;
 }
@@ -54,13 +96,12 @@ bool StateMachine::CloseMaxWall()
 MazeSquare *StateMachine::getBestBomb()
 {
     float max_score = -1000;
-    this->current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
-    this->nearest_bomb = getMazeSquareCoor(Position{6, 6, 0}, game->gladiator);
+    this->current_square = game->getCurrentSquare();
+    this->nearest_bomb = game->center_of_maze;
 
-    int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / game->gladiator->maze->getSquareSize());
-    int min_index = 0, max_index = 11;
-    min_index = (12 - next_maze_size) / 2, max_index = 11 - min_index;
-    if (game->current_time % 20000 > 10000) // On se dirige vers le centre du labyrinthe si il reste 7 secondes avant le prochain retrécissement
+    uint8_t min_index = (SIZE - game->mazeSize) / 2; 
+    uint8_t max_index = ((SIZE-1) - min_index);
+    if (game->current_time % 20000 > 13000) // On se dirige vers le centre du labyrinthe si il reste 7 secondes avant le prochain retrécissement
     {
         min_index++;
         max_index--;
@@ -98,103 +139,87 @@ MazeSquare *StateMachine::getBestBomb()
 
 MazeSquare *StateMachine::getSafeSquare()
 {
-    // 1ère méthode : faire une recherche en cerclen autour du robot, en ne regardant que les cases valables
+    // 1ère méthode : faire une recherche en cercle autour du robot, en ne regardant que les cases valables
     current_square = game->getCurrentSquare();
-
-    int next_maze_size = int(game->gladiator->maze->getCurrentMazeSize() / 0.25);
-    int min_index = (12 - next_maze_size) / 2, max_index = 11 - min_index;
-
+    
     for (int i = 1; i < 5; i++)
     {
         int steps = 16; // Adjust based on precision needed
         for (int k = 0; k < steps; k++)
         {
-            float theta = k * (2 * PI / steps);
+            float theta = k * (2.f * PI_F / steps);
             int dx = int(cos(theta) * i);
             int dy = int(sin(theta) * i);
-            MazeSquare *new_square = game->gladiator->maze->getSquare(current_square->i + dx, current_square->j + dy);
-            if (new_square != nullptr && new_square->danger == 0 && new_square->i >= min_index && new_square->j >= min_index && new_square->i <= max_index && new_square->j <= max_index)
+            MazeSquare * square = game->gladiator->maze->getSquare(current_square->i + dx, current_square->j + dy);
+            if (square != nullptr)
             {
-                game->gladiator->log("found square with radius");
-                return new_square;
+                if((!game->isOutsideArena(square))&& square->danger <= 2){
+                    // game->gladiator->log("found square with radius");
+                    return square;
+                }
             }
         }
     }
 
-    // Backup quand même ; il s'agit du code utilisé précédemment pour rentrer dans les limites du terrain
-    int sg_x = 1;
-    int sg_y = 1;
-    if (current_square->i > 6)
-    {
-        sg_x = -1;
+    if(game->isOutsideFuturArena(current_square)){
+        // game->gladiator->log("isOutsideFuturArena");
+        return game->center_of_maze;
     }
-    if (current_square->j > 6)
-    {
-        sg_y = -1;
-    }
+    return current_square;//Sinon on reste sur place en attendant un changement, comme une bombe qui explose
 
-    current_square->i = uint8_t(int(current_square->i) + sg_x);
-    current_square->j = uint8_t(int(current_square->j) + sg_y);
-    return current_square;
+    // // Backup quand même ; il s'agit du code utilisé précédemment pour rentrer dans les limites du terrain
+    // int sg_x = 1;
+    // int sg_y = 1;
+    // if (current_square->i > 6)
+    // {
+    //     sg_x = -1;
+    // }
+    // if (current_square->j > 6)
+    // {
+    //     sg_y = -1;
+    // }
+
+    // current_square->i = uint8_t(int(current_square->i) + sg_x);
+    // current_square->j = uint8_t(int(current_square->j) + sg_y);
+    // return current_square;
 }
 
-
-bool StateMachine::CloseEnemy(float dist_thresh)
+MazeSquare *StateMachine::nearestOpponent()
 {
-    bool near = false;
+    float dist1 = getDistance(game->myData.position, game->er1Data.position);
+    float dist2 = getDistance(game->myData.position, game->er2Data.position);
 
-    if ((getDistance(game->myData.position, game->er1Data.position) < dist_thresh) && game->er1Data.lifes != 0)
+    if (dist1 < dist2)
     {
-        near = true;
+        return getMazeSquareCoor(game->er1Data.position, game->gladiator);
     }
-    else if ((getDistance(game->myData.position, game->er2Data.position) < dist_thresh) && game->er2Data.lifes != 0)
-    {
-        near = true;
-    }
-    return near;
+    return getMazeSquareCoor(game->er2Data.position, game->gladiator);
 }
 
-bool StateMachine::CloseDeadEnemy(float dist_thresh)
+void StateMachine::nearestOpponent(Position &pos)
 {
-    bool near = false;
+    float dist1 = getDistance(game->myData.position, game->er1Data.position);
+    float dist2 = getDistance(game->myData.position, game->er2Data.position);
 
-    if ((getDistance(game->myData.position, game->er1Data.position) < dist_thresh) && game->er1Data.lifes == 0)
+    if (dist1 < dist2)
     {
-        near = true;
+        pos = game->er1Data.position;
     }
-    else if ((getDistance(game->myData.position, game->er2Data.position) < dist_thresh) && game->er2Data.lifes == 0)
+    else
     {
-        near = true;
+        pos = game->er2Data.position;
     }
-    return near;
-}
-
-Position StateMachine::nearestOpponent()
-{
-    Position enemy_pos;
-    float min_dist = 4.5;
-    // Récupérer la liste des IDs des robots en jeu
-    if (getDistance(game->myData.position, game->er1Data.position) < min_dist)
-    {
-        enemy_pos = game->er1Data.position;
-        min_dist = getDistance(game->myData.position, game->er1Data.position);
-    }
-    
-    if (getDistance(game->myData.position, game->er2Data.position) < min_dist)
-    {
-        enemy_pos = game->er2Data.position;
-    }
-    return enemy_pos;
 }
 
 void StateMachine::strategy()
 {
-    // Variables de gestion des ennemis
-    bool close_to_enemy = CloseEnemy(game->squareSize * 2.f);
-    bool close_dead_enemy = CloseDeadEnemy(game->squareSize*1.5f);
+    bool close_to_enemy = CloseEnemy(3);
+    bool close_dead_enemy = CloseDeadEnemy(1);
     bool attack = true;
     
-    Position enemyPos = nearestOpponent();
+    Position enemyPos;
+    nearestOpponent(enemyPos);
+
 
     float dx = enemyPos.x - game->gladiator->robot->getData().position.x;
     float dy = enemyPos.y - game->gladiator->robot->getData().position.y;
@@ -219,7 +244,6 @@ void StateMachine::strategy()
     int number_of_bombs = game->gladiator->weapon->getBombCount();
     // bool f_time_to_explode = TimeToExplode();
 
-    data = game->gladiator->robot->getData();
     square = game->getCurrentSquare();
     neighbors_strat[0] = square->northSquare;
     neighbors_strat[1] = square->southSquare;
@@ -231,7 +255,7 @@ void StateMachine::strategy()
     for (int dir = 0; dir < 4; dir++)
     {
         if (neighbors_strat[dir] == nullptr) // if we have a wall
-            continue;
+            {continue;}
 
         if (neighbors_strat[dir]->possession != '0' && neighbors_strat[dir]->possession != game->gladiator->robot->getData().teamId)
         { // if colored by the other team
@@ -262,7 +286,7 @@ void StateMachine::strategy()
         {
             currentState = State::SURVIVAL;
         }
-        else if (game->motors->available())
+        else //if (game->motors->available())
         {
             // if (f_close_enemy)
             // {
@@ -299,24 +323,29 @@ void StateMachine::strategy()
 
     case State::SURVIVAL:
     {
+        game->gladiator->log("SURVIVAL");
+
         target_square = getSafeSquare();
-        game->gotoSquare(target_square, 0, 1.5);
+        game->gotoSquare(target_square, 1);
         currentState = State::WAIT;
     }
     break;
     
     case State::EXPLORE:
     {
+        game->gladiator->log("EXPLORE");
         // On cherche où sont les bombes les plus proches et on s'y dirige et on les ramasse puis explose
-        current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator); // me donne les distances en mètres
+        current_square = game->getCurrentSquare();
+
         nearest_bomb = getBestBomb();
+        
         if (nearest_bomb == nullptr)
         {
             nearest_bomb = game->center_of_maze;
         }
         // game->gladiator->log("Nearest bomb %d", nearest_bomb->i);
 
-        SimplePath path = simpleAStar(game->gladiator, current_square, nearest_bomb);
+        SimplePath path = simpleAStar(game, current_square, nearest_bomb);
         if (path.length > 0)
         {
             if (path.length > 1)
@@ -331,7 +360,7 @@ void StateMachine::strategy()
         }
         else
         {
-            nextPos = getMazeSquareCoor({6, 6, 0}, game->gladiator);
+            nextPos = game->center_of_maze;
         }
         game->gotoSquare(nextPos);
         currentState = State::WAIT;
@@ -340,11 +369,11 @@ void StateMachine::strategy()
 
     case State::ATTACK:
     {
-        MazeSquare *current_square = getMazeSquareCoor(game->gladiator->robot->getData().position, game->gladiator);
-        Position enemy_pos = nearestOpponent();
-        MazeSquare *enemy_position = getMazeSquareCoor(enemy_pos, game->gladiator);
+        game->gladiator->log("ATTACK");
+        MazeSquare *current_square = game->getCurrentSquare();
+        MazeSquare *enemy_position = nearestOpponent();
 
-        SimplePath path = simpleAStar(game->gladiator, current_square, enemy_position);
+        SimplePath path = simpleAStar(game, current_square, enemy_position);
         if (path.length > 0)
         {
             if (path.length > 1)
@@ -361,16 +390,27 @@ void StateMachine::strategy()
         {
             nextPos = getMazeSquareCoor({6, 6, 0}, game->gladiator);
         }
-        game->gotoSquare(nextPos, 1, 1.5);
-        currentState = State::WAIT;
+
+
+        if(game->isOutsideArena(nextPos)){
+            currentState = State::EXPLORE;
+        }
+        else if(getDistance(current_square, enemy_position) < 10){
+            game->motors->activateOscillationToAttack();
+            currentState = State::WAIT;
+        }
+        else{
+            game->gotoSquare(nextPos, 1);
+            currentState = State::WAIT;
+        }
     }
     break;
 
     case State::EVADE:
     {
-        Position enemy_pos = nearestOpponent();
-        MazeSquare *enemy_position = getMazeSquareCoor(enemy_pos, game->gladiator);
-        MazeSquare *current_square = getMazeSquareCoor(data.position, game->gladiator);
+        game->gladiator->log("EVADE");
+        MazeSquare *current_square = game->getCurrentSquare();
+        MazeSquare *enemy_position = nearestOpponent();
         int sg_x = 1;
         int sg_y = 1;
         if (current_square->i < enemy_position->i)
@@ -381,16 +421,15 @@ void StateMachine::strategy()
         {
             sg_y = -1;
         }
-
-        MazeSquare *target_square = game->gladiator->maze->getSquare(uint8_t(int(current_square->i) + sg_x), uint8_t(int(current_square->j) + sg_y));
-
+        MazeSquare *target_square = game->gladiator->maze->getSquare(current_square->i + sg_x, current_square->j + sg_y);
+        
         if(game->isOutsideArena(target_square)){
-            currentState = State::EXPLORE;
+            target_square = getSafeSquare();
         }
         else{
-            game->gotoSquare(target_square, 0, 1.5);
-            currentState = State::WAIT;
+            game->gotoSquare(target_square);
         }
+        currentState = State::WAIT;
     }
     break;
     }

@@ -14,7 +14,13 @@ void GameState::Update()
     er1Data = gladiator->game->getOtherRobotData(er1Data.id);
     er2Data = gladiator->game->getOtherRobotData(er2Data.id);
 
-    this->center_of_maze = gladiator->maze->getSquare(6, 6);
+    squareSize = gladiator->maze->getSquareSize();
+    mazeSize = uint8_t(round(gladiator->maze->getCurrentMazeSize() / squareSize));
+    center_of_maze = gladiator->maze->getSquare(SIZE / 2, SIZE / 2);
+
+    min_index = (SIZE - this->mazeSize) / 2; 
+    max_index = ((SIZE - 1) - min_index);
+
 }
 
 void GameState::reset()
@@ -45,7 +51,12 @@ void GameState::reset()
 
     squareSize = gladiator->maze->getSquareSize();
 
-    this->center_of_maze = gladiator->maze->getSquare(6, 6);
+    center_of_maze = gladiator->maze->getSquare(SIZE / 2, SIZE / 2);
+
+    mazeSize = uint8_t(round(gladiator->maze->getCurrentMazeSize() / squareSize));
+
+    min_index = (SIZE - this->mazeSize) / 2; 
+    max_index = ((SIZE - 1) - min_index);
 
 
     switch (myData.id)
@@ -61,11 +72,10 @@ void GameState::reset()
     }
 }
 
-void GameState::gotoSquare(MazeSquare *square, int sens, float acceleration_level)
+void GameState::gotoSquare(MazeSquare *square, int sens)
 {
     goal = getSquareCoor(square, squareSize);
 
-    motors->setAccelerationLevel(acceleration_level);
     motors->setTargetPos(goal, sens);
 }
 
@@ -75,11 +85,21 @@ MazeSquare *GameState::getCurrentSquare(){
 
 bool GameState::isOutsideArena(MazeSquare *square)
 {
-    int next_maze_size = int(gladiator->maze->getCurrentMazeSize() / gladiator->maze->getSquareSize());
-    int min_index = (12 - next_maze_size) / 2;
-    int max_index = 11 - min_index;
-
     if (square->i < min_index || square->i > max_index || square->j < min_index || square->j > max_index)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool GameState::isOutsideArena(Position pos)
+{
+    return isOutsideArena(getMazeSquareCoor(pos, gladiator));
+}
+
+bool GameState::isOutsideFuturArena(MazeSquare *square)
+{
+    if (square->i < (min_index + 1) || square->i > (max_index - 1) || square->j < (min_index + 1) || square->j > (max_index - 1))
     {
         return true;
     }

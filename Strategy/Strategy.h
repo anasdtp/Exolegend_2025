@@ -20,7 +20,7 @@ public:
     GameState *game;
     State currentState;
     MazeSquare *square;
-    RobotData data;
+
     MazeSquare *target_square;
     MazeSquare *current_square;
     MazeSquare *nearest_bomb;
@@ -39,9 +39,9 @@ public:
 
     void strategy();
 
-    bool CloseEnemy(float dist_thresh);
+    bool CloseEnemy(uint8_t dist_thresh);
 
-    bool CloseDeadEnemy(float dist_thresh);
+    bool CloseDeadEnemy(uint8_t dist_thresh);
 
     bool CloseMaxWall();
 
@@ -51,7 +51,10 @@ public:
 
     MazeSquare *getSafeSquare();
 
-    Position nearestOpponent();
+    MazeSquare *nearestOpponent();
+    
+    void nearestOpponent(Position &pos);
+
 };
 
 #endif // STRATEGY_H
