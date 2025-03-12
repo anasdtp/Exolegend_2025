@@ -45,7 +45,7 @@ public:
     *               -1 pour forcer le déplacement en arrière)
     * @param level : le niveau de l'accélération, (1, 2, 3, 4, ...)
     */
-    void gotoSquare(MazeSquare *square, int sens = 0, float acceleration_level = 1);
+    void gotoSquare(MazeSquare *square, int sens = 0);
 
     MazeSquare *getCurrentSquare();
 

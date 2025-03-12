@@ -72,11 +72,10 @@ void GameState::reset()
     }
 }
 
-void GameState::gotoSquare(MazeSquare *square, int sens, float acceleration_level)
+void GameState::gotoSquare(MazeSquare *square, int sens)
 {
     goal = getSquareCoor(square, squareSize);
 
-    motors->setAccelerationLevel(acceleration_level);
     motors->setTargetPos(goal, sens);
 }
 

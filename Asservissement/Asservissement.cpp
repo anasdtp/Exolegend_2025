@@ -47,9 +47,6 @@ Asservissement::Asservissement(Gladiator *gladiator)
     kw = 3.f * 0.9f;
     kv = 0.75f * 0.9f;
 
-    kv_base = kv;
-    kw_base = kw;
-
     etat_automate_depl = INITIALISATION;
     flag_available = true;
 }

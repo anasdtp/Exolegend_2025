@@ -326,7 +326,7 @@ void StateMachine::strategy()
         game->gladiator->log("SURVIVAL");
 
         target_square = getSafeSquare();
-        game->gotoSquare(target_square, 0, 1.5);
+        game->gotoSquare(target_square, 1);
         currentState = State::WAIT;
     }
     break;
