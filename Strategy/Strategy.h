@@ -54,6 +54,7 @@ public:
     MazeSquare *nearestOpponent();
     
     void nearestOpponent(Position &pos);
+
 };
 
 #endif // STRATEGY_H

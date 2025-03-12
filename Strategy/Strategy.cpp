@@ -77,6 +77,7 @@ bool StateMachine::CloseDeadEnemy(uint8_t dist_thresh)
     return false;
 }
 
+
 bool StateMachine::CloseMaxWall()
 {
     bool near = false;
@@ -219,6 +220,7 @@ void StateMachine::strategy()
     Position enemyPos;
     nearestOpponent(enemyPos);
 
+
     float dx = enemyPos.x - game->gladiator->robot->getData().position.x;
     float dy = enemyPos.y - game->gladiator->robot->getData().position.y;
     
@@ -324,11 +326,11 @@ void StateMachine::strategy()
         game->gladiator->log("SURVIVAL");
 
         target_square = getSafeSquare();
-        game->gotoSquare(target_square);
+        game->gotoSquare(target_square, 0, 1.5);
         currentState = State::WAIT;
     }
     break;
-
+    
     case State::EXPLORE:
     {
         game->gladiator->log("EXPLORE");
@@ -389,6 +391,7 @@ void StateMachine::strategy()
             nextPos = getMazeSquareCoor({6, 6, 0}, game->gladiator);
         }
 
+
         if(game->isOutsideArena(nextPos)){
             currentState = State::EXPLORE;
         }
@@ -408,7 +411,6 @@ void StateMachine::strategy()
         game->gladiator->log("EVADE");
         MazeSquare *current_square = game->getCurrentSquare();
         MazeSquare *enemy_position = nearestOpponent();
-
         int sg_x = 1;
         int sg_y = 1;
         if (current_square->i < enemy_position->i)

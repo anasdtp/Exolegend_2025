@@ -13,12 +13,14 @@ void GameState::Update()
     allyData = gladiator->game->getOtherRobotData(allyData.id);
     er1Data = gladiator->game->getOtherRobotData(er1Data.id);
     er2Data = gladiator->game->getOtherRobotData(er2Data.id);
+
     squareSize = gladiator->maze->getSquareSize();
     mazeSize = uint8_t(round(gladiator->maze->getCurrentMazeSize() / squareSize));
     center_of_maze = gladiator->maze->getSquare(SIZE / 2, SIZE / 2);
 
     min_index = (SIZE - this->mazeSize) / 2; 
     max_index = ((SIZE - 1) - min_index);
+
 }
 
 void GameState::reset()
@@ -56,6 +58,7 @@ void GameState::reset()
     min_index = (SIZE - this->mazeSize) / 2; 
     max_index = ((SIZE - 1) - min_index);
 
+
     switch (myData.id)
     {
     case 128:
@@ -69,10 +72,11 @@ void GameState::reset()
     }
 }
 
-void GameState::gotoSquare(MazeSquare *square, int sens)
+void GameState::gotoSquare(MazeSquare *square, int sens, float acceleration_level)
 {
     goal = getSquareCoor(square, squareSize);
 
+    motors->setAccelerationLevel(acceleration_level);
     motors->setTargetPos(goal, sens);
 }
 

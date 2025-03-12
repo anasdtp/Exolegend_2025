@@ -47,6 +47,9 @@ Asservissement::Asservissement(Gladiator *gladiator)
     kw = 3.f * 0.9f;
     kv = 0.75f * 0.9f;
 
+    kv_base = kv;
+    kw_base = kw;
+
     etat_automate_depl = INITIALISATION;
     flag_available = true;
 }
@@ -318,6 +321,7 @@ void Asservissement::positionControl(Position targetPos)
 void Asservissement::setTargetPos(Position targetPos, int sens)
 {
     forcer_sens = sens;
+
     if(getDistance(this->targetPos, targetPos) > Threshold){
         this->targetPos = targetPos;
         etat_automate_depl = INITIALISATION;
@@ -328,4 +332,5 @@ void Asservissement::setTargetPos(Position targetPos, int sens)
 void Asservissement::activateOscillationToAttack(){
     flag_available = true;
     etat_automate_depl = ATTAQUE;
+
 }
